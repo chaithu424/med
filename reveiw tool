@@ -1,0 +1,4658 @@
+
+*&---------------------------------------------------------------------*
+*&  Include           YNMDT_REVIEW_TOOL_TOP
+*&---------------------------------------------------------------------*
+
+TYPE-POOLS: vrm.
+TABLES:sscrfields. "++ADD:ALIY2:10-Aug-2021
+TYPES:
+  BEGIN OF ty_points_tab,
+    issue_no       TYPE int4,    " Natural Number
+    obj_name       TYPE char255, " Name of type CHAR255
+    obj_type       TYPE char255,
+    subroutine     TYPE char255, " Subroutine of type CHAR255
+    line_no        TYPE char50,  " No of type CHAR10
+    issue_desc     TYPE string,
+    defect_cat     TYPE char50,  " z_mdt_defect_category,
+    defect_subcat  TYPE char100, "Defect Sub Category
+    priority       TYPE char20,  " z_mdt_priority,
+    last_rev_date  TYPE datum,   " Date
+    reviewer_comm  TYPE string,
+    developer_comm TYPE string,
+    status         TYPE char20,  " z_mdt_defect_status,
+  END OF ty_points_tab,
+
+  ty_t_points_tab TYPE STANDARD TABLE OF ty_points_tab INITIAL SIZE 0,
+
+* Screen Fields
+  BEGIN OF ty_s9001_head,
+    ecr_no      TYPE z_ecrno,                                             " ECR Number (GPS)
+    reviewer    TYPE char40,                                              " Reviewer of type CHAR40
+    edd_no      TYPE z_objid,                                             " RICEF / Development Object Id
+    wbs         TYPE char30,                                              " Wbs of type CHAR30
+    developer   TYPE z_developer,                                         " Developer Name
+    project     TYPE z_project,                                           " Project
+    hours       TYPE z_hle_ba,                                            " High Level Estimate Effort (hours) (BA)
+    architect   TYPE z_architect,                                         " Technical Architect
+    total_hr    TYPE z_hle_ba,                                            " High Level Estimate Effort (hours) (BA)
+    last_rev_dt TYPE char10,                                              " Rev_dt of type CHAR10
+    solm_pkg    TYPE z_devclass,                                          " Development Package
+    rev_status  TYPE char30,                                              " Status of type CHAR30
+    n_ex        TYPE z_nwobj,                                             " New Object (Y/N) ?
+    eta         TYPE char10,                                              " Eta of type CHAR10
+  END OF ty_s9001_head,
+
+  BEGIN OF ty_s9002_head,
+    ecr_no      TYPE z_ecrno,                                             " ECR Number (GPS)
+    reviewer    TYPE char40,                                              " Reviewer of type CHAR40
+    edd_no      TYPE z_objid,                                             " RICEF / Development Object Id
+    wbs         TYPE char30,                                              " Wbs of type CHAR30
+    developer   TYPE z_developer,                                         " Developer Name
+    project     TYPE z_project,                                           " Project
+    hours       TYPE z_hle_ba,                                            " High Level Estimate Effort (hours) (BA)
+    architect   TYPE z_architect,                                         " Technical Architect
+    total_hr    TYPE z_hle_ba,                                            " High Level Estimate Effort (hours) (BA)
+    last_rev_dt TYPE char10,                                              " Rev_dt of type CHAR10
+    solm_pkg    TYPE z_devclass,                                          " Development Package
+    rev_status  TYPE char30,                                              " Status of type CHAR30
+    n_ex        TYPE z_nwobj,                                             " New Object (Y/N) ?
+    eta         TYPE char10,                                              " Eta of type CHAR10
+  END OF ty_s9002_head,
+
+  BEGIN OF ty_inp_ba,
+    project      TYPE z_project,                                          " Project
+    prj_ref      TYPE z_prjref ,                                          " Project Reference (ECR_Seq.No)
+    sub_prj      TYPE z_subprj,                                           " Sub Project
+    prj_name     TYPE z_prjnm ,                                           " Project Name
+    objid        TYPE z_objid ,                                           " RICEF / Development Object Id
+    otype        TYPE z_objtyp ,                                          " Object Type
+    ecrno        TYPE z_ecrno ,                                           " ECR Number (GPS)
+    ecr_descr    TYPE z_ecr_descr ,                                       " ECR Description
+    impl_dt      TYPE z_impldt ,                                          " Implementation Date
+    proc_team    TYPE z_proc_team ,                                       " Process Team
+    locid        TYPE z_locid ,                                           " Location / Cluster
+    func_id      TYPE z_funcid ,                                          " Owner / Name (Business Analist)
+    complexity   TYPE z_complx ,                                          " Object Complexity
+    new_obj      TYPE z_nwobj ,                                           " New Object (Y/N) ?
+    zpackage     TYPE z_devclass,                                         " Development Package
+    pln_fs_dlvdt TYPE z_pln_fs_dlvdt ,                                    " Planned FS Delivery Date
+    week_nr      TYPE z_weeknr ,                                          " Planned FS Delivery Week Number
+    act_fs_dlvdt TYPE z_act_fs_dlvdt ,                                    " Actual FS Delivery date
+    devloc       TYPE z_devloc ,                                          " Development Location
+    pln_whodt    TYPE z_who_plndt ,                                       " Planned WHO Date
+    act_whodt    TYPE z_who_actdt,                                        " Actual WHO Date
+    hle_ba       TYPE z_hle_ba ,                                          " High Level Estimate Effort (hours) (BA)
+    hle_dev      TYPE z_hle_dev ,                                         " High Level Estimate Effort (hours) (Development)
+    dee_ba       TYPE z_dee_ba ,                                          " Detailed Estimate Effort (hours)
+    bi_impct     TYPE z_bi_impct ,                                        " BI Impact (Y/N)
+    pln_futdt    TYPE z_pln_futdt ,                                       " Planned FUT Completion Date
+    act_futdt    TYPE z_act_futdt ,                                       " Actual FUT Completion Date
+    fut_stat     TYPE z_fut_stat ,                                        " FUT Status
+    pln_uatdt    TYPE z_pln_uatdt ,                                       " Planned UAT Completion Date
+    act_uatdt    TYPE z_act_uatdt ,                                       " Actual UAT Completion Date
+    uat_stat     TYPE z_uat_stat ,                                        " UAT Status
+    tcode        TYPE tcode ,                                             " Transaction Code
+    auth_reqd    TYPE z_auth_reqd ,                                       " Authorization Required (Y/N)
+    note         TYPE z_note ,                                            " Note
+    addnl_note   TYPE z_note ,                                            " Note
+    usnam        TYPE usnam ,                                             " User name
+    cpudt        TYPE cpudt ,                                             " Day On Which Accounting Document Was Entered
+    usupd        TYPE usupd,                                              " Changed By
+    udat         TYPE udat,                                               " Changed On
+
+  END OF ty_inp_ba,
+
+  ty_t_inp_ba       TYPE STANDARD TABLE OF ty_inp_ba INITIAL SIZE 0,
+  ty_zcap_review_it TYPE STANDARD TABLE OF zcap_review_it INITIAL SIZE 0, " Review points table
+
+  BEGIN OF ty_tech_info,
+    project   TYPE z_project,                                             " Project
+    prj_ref   TYPE z_prjref,                                              " Project Reference (ECR_Seq.No)
+    architect TYPE z_architect,                                           " Technical Architect
+    tech_lead TYPE z_tech_lead,                                           " Technical Lead
+    developer TYPE z_developer,                                           " Developer Name
+    hle_sap   TYPE z_hle_dev,                                             " High Level Estimate Effort (hours) (Development)
+  END OF ty_tech_info,
+
+  ty_t_tech_info TYPE STANDARD TABLE OF ty_tech_info INITIAL SIZE 0,
+
+  BEGIN OF ty_e070,
+    trkorr     TYPE trkorr,                                               " Request/Task
+    trfunction TYPE trfunction,                                           " Type of request/task
+    strkorr    TYPE strkorr,                                              " Higher-Level Request
+  END OF ty_e070,
+
+  ty_t_e070 TYPE STANDARD TABLE OF ty_e070 INITIAL SIZE 0,                " Change & Transport System: Header of Requests/Tasks
+
+  BEGIN OF ty_e071,
+    trkorr   TYPE trkorr,                                                 " Request/Task
+    pgmid	   TYPE pgmid,                                                  " Program ID in Requests and Tasks
+    object   TYPE	trobjtype,
+    obj_name TYPE trobj_name,                                             " Object Name in Object List
+  END OF ty_e071,
+
+  ty_t_e071 TYPE STANDARD TABLE OF ty_e071 INITIAL SIZE 0,                " Change & Transport System: Object Entries of Requests/Tasks
+
+  BEGIN OF ty_review_lock,
+    project TYPE  z_project,                                              " Project
+    prj_ref	TYPE   z_prjref,
+    counter	TYPE int4,
+    lock    TYPE flag,                                                    " General Flag
+  END OF ty_review_lock,
+
+  ty_t_review_lock TYPE STANDARD TABLE OF ty_review_lock INITIAL SIZE 0,
+
+  BEGIN OF ty_inc_review,
+    inc_number  TYPE z_ecrno,                                             " Incident Number (Service Now)
+    inc_task    TYPE z_prjref,                                            " Project Reference (Inc Task)
+    object_id   TYPE z_devid,                                             " Object ID
+    project     TYPE z_project,                                           " Project
+    wbs         TYPE char40,                                              " Wbs of type CHAR40
+    developer   TYPE syuname,                                             " User Name for Developer
+    architect   TYPE syuname,                                             " User Name for Architect
+    solman_pkg  TYPE char20,                                              " Solman Pkg of type CHAR20
+    effort      TYPE z_hle_dev,                                           " High Level Estimate Effort (hours) (Development)
+    create_date TYPE sydatum,                                             " System Date - Create date
+    created_by  TYPE syuname,                                             " User Name - Created by
+    change_date TYPE sydatum,                                             " System Date - Change date
+    changed_by  TYPE syuname,                                             " User Name - Changed by
+  END OF ty_inc_review.
+
+
+
+
+********************************************************************************
+CLASS:  cl_events_d9001 DEFINITION DEFERRED.
+
+DATA: w_points_tab       TYPE ty_points_tab,
+      t_points_tab       TYPE ty_t_points_tab,
+      t_e070             TYPE ty_t_e070,
+      t_e071             TYPE ty_t_e071,
+      t_review_role      TYPE STANDARD TABLE OF zcap_review_role, " Role table for Review process
+      t_review_hd        TYPE STANDARD TABLE OF zcap_review_hd,   " Header table for review process tracking
+      w_review_hd_act    TYPE zcap_review_hd,                     " Header table for review process tracking
+      t_review_it        TYPE STANDARD TABLE OF zcap_review_it,   " Review points table
+      t_review_it_act    TYPE STANDARD TABLE OF zcap_review_it,   " Review points table
+      t_review_lock_data TYPE ty_t_review_lock,
+      t_defect_subcat    TYPE STANDARD TABLE OF zcap_def_subcat,
+      t_taba_prio        TYPE STANDARD TABLE OF dd07v,            " Generated Table for View
+      t_taba_def_catg    TYPE STANDARD TABLE OF dd07v,            " Generated Table for View
+      t_taba_rev_stat    TYPE STANDARD TABLE OF dd07v,            " Generated Table for View
+      t_taba_def_stat    TYPE STANDARD TABLE OF dd07v.            " Generated Table for View
+
+
+DATA:
+  g_tr              TYPE trkorr,                          " Request/Task
+  g_task            TYPE trkorr,                          " Request/Task
+  t_inp_ba          TYPE ty_t_inp_ba,
+  w_inp_ba          TYPE ty_inp_ba,
+  w_tech_info       TYPE ty_tech_info,
+  w_layout          TYPE lvc_s_layo,                      " ALV control: Layout structure
+  w_s9001_head      TYPE ty_s9001_head,
+  w_s9002_head      TYPE ty_s9002_head,
+  g_role_indc       TYPE z_review_role,                   " Role for review process
+  g_initiate_f      TYPE flag,                            " General Flag
+  g_cont            TYPE REF TO cl_gui_custom_container,  " Container for Custom Controls in the Screen Area
+  go_alv_part       TYPE REF TO cl_gui_alv_grid,          " ALV List Viewer
+  g_obj_list_editor TYPE REF TO cl_gui_custom_container,  " Container for Custom Controls in the Screen Area
+  g_cts_list_editor TYPE REF TO cl_gui_custom_container,  " Container for Custom Controls in the Screen Area
+  w_toolbar         TYPE stb_button,                      " Alv toolbar
+  e_object          TYPE REF TO cl_alv_event_toolbar_set, " ALV Context Menu
+  go_event_receiver TYPE REF TO cl_events_d9001,          " Events_d9001 class
+  g_text_editor     TYPE REF TO cl_gui_textedit,          " SAP TextEdit Control
+  g_text_editor_cts TYPE REF TO cl_gui_textedit,          " SAP TextEdit Control
+  g_text_obj_list   TYPE string,                          " Text variable for messages
+  g_text_cts_list   TYPE string,                          " Text variable for messages
+  g_okcode          TYPE syst_ucomm,                      " ABAP System Field: PAI-Triggering Function Code
+  w_inc_review      TYPE ty_inc_review.
+*** Begin ADD:ALIY2:1-Aug-2019
+TYPES: BEGIN OF ty_tr,
+         trkorr     TYPE trkorr,
+         trfunction TYPE trfunction,
+       END OF ty_tr,
+       tty_tr TYPE STANDARD TABLE OF ty_tr,
+       BEGIN OF ts_tr,
+         trkorr TYPE trkorr,
+       END OF ts_tr,
+       tt_tr TYPE STANDARD TABLE OF ts_tr.
+DATA : g_confirm_val TYPE char1,
+*       g_lines       TYPE i,
+       t_tr          TYPE tty_tr,
+       t_data        TYPE STANDARD TABLE OF tab512  INITIAL SIZE 0,
+       t_options     TYPE STANDARD TABLE OF rfc_db_opt INITIAL SIZE 0,
+       t_fields      TYPE STANDARD TABLE OF rfc_db_fld INITIAL SIZE 0,
+       t_e071_rfc    TYPE STANDARD TABLE OF ty_e071.
+CONSTANTS:c_percent    TYPE char1 VALUE '%',
+          c_bracket    TYPE char1 VALUE ')',
+          c_trkorr     TYPE fieldname VALUE 'TRKORR',
+          c_pgmid      TYPE fieldname VALUE 'PGMID',
+          c_object     TYPE fieldname VALUE 'OBJECT',
+          c_obj_name   TYPE fieldname VALUE 'OBJ_NAME',
+          c_trfunction TYPE fieldname VALUE 'TRFUNCTION',
+          c_e07t       TYPE tabname VALUE 'E07T',
+          c_e070       TYPE tabname VALUE 'E070',
+          c_e071       TYPE tabname VALUE 'E071'.
+*** End ADD:ALIY2:1-Aug-2019
+* Begin ADD:ALIY2:25-Aug-2021
+DATA:gv_flag   TYPE flag,
+     gv_gui_on TYPE c.
+CONSTANTS:
+*          gc_rfcdest_dg TYPE rfcdest VALUE 'DG1CLNT010'," --DEL:MAZUMS4:16-Feb-2023
+          gc_rfcdest_dg TYPE rfcdest VALUE 'RICEFDG1010'," ++ADD:MAZUMS4:16-Feb-2023
+*          gc_rfcdest_da TYPE rfcdest VALUE 'DA1CLNT010'," --DEL:MAZUMS4:16-Feb-2023
+          gc_rfcdest_da TYPE rfcdest VALUE 'RICEFDA1010'," ++ADD:MAZUMS4:16-Feb-2023
+*          gc_rfcdest_dc TYPE rfcdest VALUE 'DC1CLNT010'." --DEL:MAZUMS4:16-Feb-2023
+          gc_rfcdest_dc TYPE rfcdest VALUE 'RICEFDC1010'." --DEL:MAZUMS4:16-Feb-2023
+* End ADD:ALIY2:25-Aug-2021
+CONSTANTS:
+  c_cont_obj_list TYPE char20        VALUE 'S9001_OBJ_LIST_CONT', " Container of type CHAR18
+  c_cont_cts_list TYPE char20        VALUE 'S9001_CTS_CONT',      " Container of type CHAR18
+  c_alv_tab_name  TYPE lvc_tname     VALUE 'T_POINTS_TAB',        " LVC tab name
+  c_line_length   TYPE i             VALUE 40,                    " Line_length of type Integers
+  c_role_a        TYPE z_review_role VALUE 'A',                   " Role for review process
+  c_role_d        TYPE z_review_role VALUE 'D',                   " Role for review process
+  c_role_r        TYPE z_review_role VALUE 'R',                   " Role for review process
+  c_role_o        TYPE z_review_role VALUE 'O',                   " Role for review process
+  c_msgtyp_s      TYPE syst_msgty    VALUE 'S',                   " ABAP System Field: Message Type
+  c_msgtyp_e      TYPE syst_msgty    VALUE 'E',                   " ABAP System Field: Message Type
+  c_comma         TYPE char1         VALUE ',',                   " Comma of type CHAR1
+  c_answer_1      TYPE char1         VALUE '1',                   " Answer_1 of type CHAR1
+  c_answer_2      TYPE char1         VALUE '2',                   " Answer_2 of type CHAR1
+  c_sign_i        TYPE raldb_sign    VALUE 'I',                   " SIGN field in creation of SELECT-OPTIONS tables
+  c_opti_eq       TYPE raldb_opti    VALUE 'EQ',                  " OPTION field in structure of SELECT-OPTIONS tables
+  c_back          TYPE syst_ucomm    VALUE 'BACK',                " ABAP System Field: PAI-Triggering Function Code
+  c_exit          TYPE syst_ucomm    VALUE 'EXIT',                " ABAP System Field: PAI-Triggering Function Code
+  c_cancel        TYPE syst_ucomm    VALUE 'CANCEL',              " ABAP System Field: PAI-Triggering Function Code
+  c_b_submit      TYPE ui_func       VALUE 'SUBMIT',              " Function Code
+  c_b_approve     TYPE ui_func       VALUE 'APPROVE',             " Function Code
+  c_b_bt_admin    TYPE ui_func       VALUE 'BT_ADMIN',            " Function Code
+  c_b_dexcel      TYPE ui_func       VALUE 'D_EXCEL',             " Function Code
+  c_b_sci         TYPE ui_func       VALUE 'D_SCI',            " Function Code   " ALIY2:25-AUG-2021
+  c_b_dcrc        TYPE ui_func       VALUE 'D_CRC'.             " Function Code
+
+
+*&--------------------------------------------------------------------*
+*& Object Id      : Review Automation Tool                            *
+*& Author         : Prodip Paul                                       *
+*& Creation Date  : 01-Jun-2017                                       *
+*& Description    : Review Automation Tool                            *
+*& Transport No   : DR1K9B45P1                                        *
+*& Change Tag     : N/A                                               *
+*&--------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&  Include           YNMDT_REVIEW_TOOL_SEL
+*&---------------------------------------------------------------------*
+
+
+DATA : gv_tr TYPE trkorr.
+SELECTION-SCREEN: FUNCTION KEY 1. "++ADD:ALIY2:10-Aug-2021
+*                  FUNCTION KEY 2. "++ADD:ALIY2:25_oct-2021
+
+SELECTION-SCREEN BEGIN OF BLOCK b1 WITH FRAME TITLE TEXT-a01.
+PARAMETERS:  p_ecr_no TYPE z_ecrno." OBLIGATORY.
+
+*+ADDED BY BARDHS2 "INTRODUCE OBJECT ID FIELD ON SELECTION SCREEN" DATE: 16/05/2023
+*IF   sy-uname = 'BARDHS2' OR
+*     sy-uname = 'MAZUMS4' OR
+*     sy-uname = 'CHATTS4' OR
+*     sy-uname = 'DASC2'
+*      OR sy-uname = 'CHATUD2'.
+
+  PARAMETER: p_obj_id TYPE z_objid.
+
+*ENDIF.
+*+ADDED BY BARDHS2 "INTRODUCE OBJECT ID FIELD ON SELECTION SCREEN" DATE: 16/05/2023
+
+SELECT-OPTIONS : s_tr FOR gv_tr NO INTERVALS,
+                 s_task FOR gv_tr NO INTERVALS.
+
+PARAMETERS : p_dev_hr TYPE z_hle_dev,
+             p_wbs    TYPE char30,
+             p_eta    TYPE datum,
+             p_count  TYPE int4 NO-DISPLAY.
+
+*PARAMETERS : p_proj   TYPE z_project,
+*             p_prjref TYPE z_prjref,
+*             p_count  TYPE int4,
+*             p_ecr    TYPE z_ecrno.
+SELECTION-SCREEN END OF BLOCK b1.
+
+
+*&--------------------------------------------------------------------*
+*& Object Id      : Review Automation Tool                            *
+*& Author         : Prodip Paul                                       *
+*& Creation Date  : 01-Jun-2017                                       *
+*& Description    : Review Automation Tool                            *
+*& Transport No   : DR1K9B45P1                                        *
+*& Change Tag     : N/A                                               *
+*&--------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&  Include           YNMDT_REVIEW_TOOL_SUB
+*&---------------------------------------------------------------------*
+*---------------------------------------------------------------------*
+*       CLASS cl_events_d9001 DEFINITION
+*---------------------------------------------------------------------*
+  CLASS cl_events_d9001 DEFINITION. " Events_d9001 class
+    PUBLIC SECTION.
+      METHODS:
+*      Code addition for ALV pushbuttons
+*       For placing buttons
+        handle_toolbar_set
+            FOR EVENT toolbar OF cl_gui_alv_grid
+          IMPORTING
+            e_object
+            e_interactive,
+
+*       user command on clicking a button
+        handle_user_command
+            FOR EVENT user_command OF cl_gui_alv_grid
+          IMPORTING
+            e_ucomm.
+*    Data CHANGING request
+*      handle_data_change
+*      FOR EVENT data_changed OF cl_gui_alv_grid
+*    IMPORTING er_data_changed
+*      e_ucomm.
+  ENDCLASS. "cl_events_d9001 DEFINITION
+
+  CLASS cl_events_d9001 IMPLEMENTATION. " Events_d9001 class
+*---------------------------------------------------------------------*
+*       METHOD double_click                                           *
+*---------------------------------------------------------------------*
+*       ........                                                      *
+*---------------------------------------------------------------------*
+
+*---method for handling toolbar
+    METHOD handle_toolbar_set.
+
+*      CLEAR w_toolbar.
+**     Button to insert a row
+*      w_toolbar-function  = 'INST'. " Name of button to catch click
+*      w_toolbar-butn_type = 0.
+*      w_toolbar-icon      = icon_insert_row.
+*      w_toolbar-quickinfo = 'Insert'.
+*      APPEND w_toolbar TO e_object->mt_toolbar.
+
+    ENDMETHOD. "handle_toolbar_set
+    METHOD handle_user_command.
+
+*     Local data declaration
+
+      BREAK paulp7.
+*     Checking the user command
+*      CASE e_ucomm.
+*        WHEN .
+*
+*      ENDCASE.
+    ENDMETHOD. "handle_user_command
+
+  ENDCLASS. "cl_events_d9001 IMPLEMENTATION
+
+
+*&---------------------------------------------------------------------*
+*&      Form  SUB_DISPLAY_ALV
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_display_alv .
+
+    CASE g_role_indc.
+      WHEN c_role_a. " Admin
+        IF w_review_hd_act-status = '1'.
+          CALL SCREEN 9002.
+        ELSE. " ELSE -> IF w_review_hd_act-status = '1'
+          CALL SCREEN 9001.
+        ENDIF. " IF w_review_hd_act-status = '1'
+
+      WHEN c_role_d. " Developer
+        CALL SCREEN 9001.
+      WHEN c_role_r. " Reviewer
+        CALL SCREEN 9001.
+      WHEN c_role_o. " Others
+        PERFORM sub_lock_unlock USING abap_false
+                                    w_review_hd_act
+                          CHANGING t_review_lock_data.
+        CALL SCREEN 9001.
+      WHEN OTHERS.
+        MESSAGE s999 WITH 'Sorry! Your are not authorized to ' 'this specific task' DISPLAY LIKE 'E'.
+    ENDCASE.
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_9001  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+  MODULE status_9001 OUTPUT.
+
+    DATA: lt_extab TYPE slis_t_extab.
+
+    PERFORM sub_hide_buttons_9001 CHANGING lt_extab.
+    SET TITLEBAR '9001_TITLE'.
+
+*   SET PF status for the ALV screen
+    SET PF-STATUS 'ZPF_STATUS_9001' EXCLUDING lt_extab.
+
+  ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  STATUS_9002  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+  MODULE status_9002 OUTPUT.
+
+    SET TITLEBAR '9002_TITLE'.
+
+    PERFORM sub_hide_buttons_9002 CHANGING lt_extab.
+* SET PF status for the ALV screen
+    SET PF-STATUS 'ZPF_STATUS_9001' EXCLUDING lt_extab.
+
+  ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  PBO_9001  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+  MODULE pbo_9001 OUTPUT.
+
+*   Create Objects for Split ALVs
+    PERFORM sub_create_objects.
+
+    PERFORM sub_set_drp_dwn_tab.
+
+    PERFORM sub_populate_screen_flds.
+
+*   Display two ALVs
+    PERFORM sub_disp_table_control.
+
+
+  ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  PBO_9002  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+  MODULE pbo_9002 OUTPUT.
+
+    PERFORM sub_set_drp_dwn_tab.
+
+    PERFORM sub_populate_screen_flds.
+
+  ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_CREATE_OBJECTS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_create_objects .
+
+* Create Container for ALV
+    IF g_cont IS NOT BOUND.
+      CREATE OBJECT g_cont
+        EXPORTING
+          container_name = 'G_CONTAINER_9001'.
+
+      IF g_cont IS BOUND.
+
+*     Creating object of alv.
+        CREATE OBJECT go_alv_part
+          EXPORTING
+            i_parent = g_cont.
+
+        IF go_alv_part IS BOUND.
+
+        ENDIF. " IF go_alv_part IS BOUND
+      ENDIF. " IF g_cont IS BOUND
+    ENDIF. " IF g_cont IS NOT BOUND
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_DISP_TABLE_CONTROL
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_disp_table_control .
+
+*   Local data declaration
+    DATA:
+      lt_columns TYPE  lvc_t_fcat,                              " Table for Field catalogue
+      lt_exclude TYPE STANDARD TABLE OF ui_func INITIAL SIZE 0. " Function Code
+
+*    w_layout-cwidth_opt = abap_true.
+    w_layout-zebra = abap_true.
+
+    IF go_alv_part IS BOUND.
+
+*     Prepare buttons
+      PERFORM sub_alv_button_exclude CHANGING lt_exclude.
+
+*     Prepare the Field Catalogue
+      PERFORM sub_prep_fieldcat_for_points
+                    CHANGING lt_columns.
+*         Calling method to generate event for enter
+      CALL METHOD go_alv_part->register_edit_event
+        EXPORTING
+          i_event_id = cl_gui_alv_grid=>mc_evt_enter.
+
+      CALL METHOD go_alv_part->register_edit_event
+        EXPORTING
+          i_event_id = cl_gui_alv_grid=>mc_evt_modified.
+
+
+*     Display 1st ALV
+      CALL METHOD go_alv_part->set_table_for_first_display
+        EXPORTING
+*         i_buffer_active               =
+*         i_bypassing_buffer            =
+*         i_consistency_check           =
+*         i_structure_name              =
+*         is_variant                    =
+*         i_save                        =
+*         i_default                     = 'X'
+          is_layout                     = w_layout
+*         is_print                      =
+*         it_special_groups             =
+          it_toolbar_excluding          = lt_exclude
+*         it_hyperlink                  =
+*         it_alv_graphics               =
+*         it_except_qinfo               =
+*         ir_salv_adapter               =
+        CHANGING
+          it_outtab                     = t_points_tab[]
+          it_fieldcatalog               = lt_columns[]
+*         it_sort                       =
+*         it_filter                     =
+        EXCEPTIONS
+          invalid_parameter_combination = 1
+          program_error                 = 2
+          too_many_lines                = 3
+          OTHERS                        = 4.
+
+
+*         CREATE OBJECT gr_events_d9100.
+      CREATE OBJECT go_event_receiver.
+
+*         Set Handler event_receiver1 for alv grid.
+      SET HANDLER go_event_receiver->handle_toolbar_set   FOR go_alv_part.
+      SET HANDLER go_event_receiver->handle_user_command  FOR go_alv_part.
+
+      IF g_role_indc = c_role_o.
+
+* Set editable cells not editable for other users
+        CALL METHOD go_alv_part->set_ready_for_input
+          EXPORTING
+            i_ready_for_input = 0.
+      ELSE. " ELSE -> IF g_role_indc = c_role_o
+* Set editable cells to ready for input initially
+        CALL METHOD go_alv_part->set_ready_for_input
+          EXPORTING
+            i_ready_for_input = 1.
+
+        IF sy-subrc <> 0.
+*       Implement suitable error handling here
+        ENDIF. " IF sy-subrc <> 0
+      ENDIF. " IF g_role_indc = c_role_o
+
+
+
+
+    ENDIF. " IF go_alv_part IS BOUND
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_PREP_FIELDCAT_FOR_POINTS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_T_COLUMNS  text
+*----------------------------------------------------------------------*
+  FORM sub_prep_fieldcat_for_points  CHANGING p_t_columns.
+
+*   Local data declaration
+    DATA:
+      l_colpos     TYPE lvc_colpos, " ALV control: Output column
+      l_field_name TYPE lvc_fname,  " ALV control: Field name of internal table field
+      l_long_txt   TYPE scrtext_l.  " Long Field Label
+
+
+*************************************************************
+*** Populating all the fields to field catalogue    *********
+*************************************************************
+
+    l_field_name = 'ISSUE_NO'.
+    l_long_txt = 'Issue No.'.
+    l_colpos = l_colpos + 1.
+
+    PERFORM sub_set_alv_column USING c_alv_tab_name
+                                     l_colpos
+                                     l_field_name
+                                     l_long_txt
+                               CHANGING p_t_columns   .
+
+* **********************************************************
+
+
+    l_field_name = 'OBJ_NAME'.
+    l_long_txt = 'Object Name'.
+    l_colpos = l_colpos + 1.
+
+    PERFORM sub_set_alv_column USING c_alv_tab_name
+                                     l_colpos
+                                     l_field_name
+                                     l_long_txt
+                               CHANGING p_t_columns   .
+
+* **********************************************************
+
+    l_field_name = 'OBJ_TYPE'.
+    l_long_txt = 'Object Type'.
+    l_colpos = l_colpos + 1.
+
+    PERFORM sub_set_alv_column USING c_alv_tab_name
+                                     l_colpos
+                                     l_field_name
+                                     l_long_txt
+                               CHANGING p_t_columns   .
+
+* **********************************************************
+
+    l_field_name = 'SUBROUTINE'.
+    l_long_txt = 'Subroutine'.
+    l_colpos = l_colpos + 1.
+
+    PERFORM sub_set_alv_column USING c_alv_tab_name
+                                     l_colpos
+                                     l_field_name
+                                     l_long_txt
+                               CHANGING p_t_columns   .
+
+* **********************************************************
+
+    l_field_name = 'DEFECT_CAT'.
+    l_long_txt = 'Defect Category'.
+    l_colpos = l_colpos + 1.
+
+    PERFORM sub_set_alv_column USING c_alv_tab_name
+                                     l_colpos
+                                     l_field_name
+                                     l_long_txt
+                               CHANGING p_t_columns   .
+
+* **********************************************************
+
+    l_field_name = 'DEFECT_SUBCAT'.
+    l_long_txt = 'Defect Sub Category'.
+    l_colpos = l_colpos + 1.
+
+    PERFORM sub_set_alv_column USING c_alv_tab_name
+                                     l_colpos
+                                     l_field_name
+                                     l_long_txt
+                               CHANGING p_t_columns   .
+* **********************************************************
+
+    l_field_name = 'LINE_NO'.
+    l_long_txt = 'Line'.
+    l_colpos = l_colpos + 1.
+
+    PERFORM sub_set_alv_column USING c_alv_tab_name
+                                     l_colpos
+                                     l_field_name
+                                     l_long_txt
+                               CHANGING p_t_columns   .
+
+* **********************************************************
+
+    l_field_name = 'ISSUE_DESC'.
+    l_long_txt = 'Issue'.
+    l_colpos = l_colpos + 1.
+
+    PERFORM sub_set_alv_column USING c_alv_tab_name
+                                     l_colpos
+                                     l_field_name
+                                     l_long_txt
+                               CHANGING p_t_columns   .
+
+* **********************************************************
+
+    l_field_name = 'PRIORITY'.
+    l_long_txt = 'Priority'.
+    l_colpos = l_colpos + 1.
+
+    PERFORM sub_set_alv_column USING c_alv_tab_name
+                                     l_colpos
+                                     l_field_name
+                                     l_long_txt
+                               CHANGING p_t_columns   .
+
+* **********************************************************
+
+    l_field_name = 'LAST_REV_DATE'.
+    l_long_txt = 'Last Review Date'.
+    l_colpos = l_colpos + 1.
+
+    PERFORM sub_set_alv_column USING c_alv_tab_name
+                                     l_colpos
+                                     l_field_name
+                                     l_long_txt
+                               CHANGING p_t_columns   .
+
+* **********************************************************
+
+    l_field_name = 'REVIEWER_COMM'.
+    l_long_txt = 'Reviewer Comment'.
+    l_colpos = l_colpos + 1.
+
+    PERFORM sub_set_alv_column USING c_alv_tab_name
+                                     l_colpos
+                                     l_field_name
+                                     l_long_txt
+                               CHANGING p_t_columns   .
+
+* **********************************************************
+
+    l_field_name = 'DEVELOPER_COMM'.
+    l_long_txt = 'Developer Comment'.
+    l_colpos = l_colpos + 1.
+
+    PERFORM sub_set_alv_column USING c_alv_tab_name
+                                     l_colpos
+                                     l_field_name
+                                     l_long_txt
+                               CHANGING p_t_columns   .
+
+* **********************************************************
+
+    l_field_name = 'STATUS'.
+    l_long_txt = 'Status'.
+    l_colpos = l_colpos + 1.
+
+    PERFORM sub_set_alv_column USING c_alv_tab_name
+                                     l_colpos
+                                     l_field_name
+                                     l_long_txt
+                               CHANGING p_t_columns   .
+
+* **********************************************************
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_SET_ALV_COLUMN
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_TAB_NAME  text
+*      -->P_COLPOS  text
+*      -->P_FIELD_NAME  text
+*      -->P_LONG_TXT  text
+*      -->P_ENDFORM  text
+*----------------------------------------------------------------------*
+  FORM sub_set_alv_column  USING    p_tab_name TYPE lvc_tname    " LVC tab name
+                                    p_col_pos    TYPE lvc_colpos " ALV control: Output column
+                                    p_field_name TYPE lvc_fname  " ALV control: Field name of internal table field
+                                    p_col_txt    TYPE lvc_txtcol " ALV control: Column heading
+                           CHANGING p_t_columns  TYPE lvc_t_fcat.
+
+
+*   Local Declarations
+    DATA: lw_fldcat TYPE lvc_s_fcat. " ALV control: Field catalog
+
+*   Populate fieldcatalog for Status field
+    lw_fldcat-col_pos = p_col_pos.
+    lw_fldcat-fieldname = p_field_name.
+    lw_fldcat-tabname = p_tab_name.
+    lw_fldcat-coltext = p_col_txt.
+    lw_fldcat-edit = abap_true.
+
+    CASE p_field_name.
+
+      WHEN 'ISSUE_NO'.
+*        lw_fldcat-edit = abap_false. " --DEL:ALIY2:15-Nov:2021
+        lw_fldcat-edit = abap_true. " ++ADD:ALIY2:15-Nov:2021
+
+      WHEN 'OBJ_NAME'.
+        lw_fldcat-outputlen = 30.
+        IF g_role_indc = c_role_d.
+          lw_fldcat-edit = abap_false.
+        ENDIF. " IF g_role_indc = c_role_d
+
+      WHEN 'OBJ_TYPE'.
+        lw_fldcat-outputlen = 20.
+        IF g_role_indc = c_role_d.
+          lw_fldcat-edit = abap_false.
+        ENDIF. " IF g_role_indc = c_role_d
+
+      WHEN 'SUBROUTINE'.
+        lw_fldcat-outputlen = 30.
+        IF g_role_indc = c_role_d.
+          lw_fldcat-edit = abap_false.
+        ENDIF. " IF g_role_indc = c_role_d
+
+      WHEN 'ISSUE_DESC'.
+        lw_fldcat-outputlen = 30.
+        IF g_role_indc = c_role_d.
+          lw_fldcat-edit = abap_false.
+        ENDIF. " IF g_role_indc = c_role_d
+
+      WHEN 'LINE_NO'.
+        IF g_role_indc = c_role_d.
+          lw_fldcat-edit = abap_false.
+        ENDIF. " IF g_role_indc = c_role_d
+
+      WHEN 'DEFECT_CAT'.
+
+        lw_fldcat-drdn_hndl = '1'.
+*        lw_fldcat-drdn_alias = abap_.
+        lw_fldcat-outputlen = 32.
+        lw_fldcat-checktable = '!'.
+        IF g_role_indc = c_role_d.
+          lw_fldcat-edit = abap_false.
+        ENDIF. " IF g_role_indc = c_role_d
+
+      WHEN 'DEFECT_SUBCAT'.
+
+        lw_fldcat-drdn_hndl = '2'.
+*        lw_fldcat-drdn_alias = abap_.
+        lw_fldcat-outputlen = 32.
+        lw_fldcat-checktable = '!'.
+        IF g_role_indc = c_role_d.
+          lw_fldcat-edit = abap_false.
+        ENDIF. " IF g_role_indc = c_role_d
+      WHEN 'PRIORITY'.
+
+        lw_fldcat-drdn_hndl = '3'.
+*        lw_fldcat-drdn_alias = abap_true.
+        lw_fldcat-outputlen = 10.
+        lw_fldcat-checktable = '!'.
+        IF g_role_indc = c_role_d.
+          lw_fldcat-edit = abap_false.
+        ENDIF. " IF g_role_indc = c_role_d
+
+      WHEN 'STATUS'.
+
+        lw_fldcat-drdn_hndl = '4'.
+*        lw_fldcat-drdn_alias = abap_true.
+        lw_fldcat-outputlen = 10.
+        lw_fldcat-checktable = '!'.
+
+      WHEN 'LAST_REV_DATE'.
+
+        lw_fldcat-ref_table = 'SYST'.
+        lw_fldcat-ref_field = 'DATUM'.
+        lw_fldcat-edit = abap_false.
+
+      WHEN 'REVIEWER_COMM'.
+        lw_fldcat-outputlen = 30.
+        IF g_role_indc = c_role_d.
+          lw_fldcat-edit = abap_false.
+        ENDIF. " IF g_role_indc = c_role_d
+
+      WHEN 'DEVELOPER_COMM'.
+        lw_fldcat-outputlen = 30.
+        IF g_role_indc = c_role_r
+          OR g_role_indc = c_role_a.
+
+          lw_fldcat-edit = abap_false.
+        ENDIF. " IF g_role_indc = c_role_r
+      WHEN OTHERS.
+
+    ENDCASE.
+
+    APPEND lw_fldcat TO p_t_columns.
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_9001  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+  MODULE user_command_9001 INPUT.
+
+    DATA: l_change_f        TYPE char1,                    " Change_f of type CHAR1
+          l_error_flag      TYPE flag,                     " General Flag
+          lw_zcap_review_hd TYPE zcap_review_hd,           " Header table for review process tracking
+          lw_review_mail    TYPE zcap_review_mail_details, " Structure required to send mail
+          lt_zcap_review_it TYPE ty_zcap_review_it.        " Review points table
+
+    CLEAR: l_change_f,
+           l_error_flag.
+    CALL METHOD go_alv_part->check_changed_data( IMPORTING e_valid = l_change_f ).
+
+    g_okcode = sy-ucomm.
+
+    CASE g_okcode.
+      WHEN c_back OR c_exit OR c_cancel.
+        LEAVE TO SCREEN 0.
+
+      WHEN c_b_submit. " SUBMIT
+
+
+        PERFORM sub_prep_rev_hd_data CHANGING lw_zcap_review_hd.
+        IF l_change_f IS NOT INITIAL.
+          PERFORM sub_prep_rev_it_data USING lw_zcap_review_hd
+                                       CHANGING l_error_flag
+                                                lt_zcap_review_it.
+        ENDIF. " IF l_change_f IS NOT INITIAL
+
+        IF l_error_flag IS INITIAL.
+ "++SHARMH2
+          IF lt_zcap_review_it IS NOT INITIAL.
+            PERFORM sub_review_rework_effrt CHANGING lw_zcap_review_hd.
+          ENDIF. " IF lt_zcap_review_it IS NOT INITIAL
+
+          MODIFY zcap_review_hd FROM lw_zcap_review_hd.
+          IF lt_zcap_review_it[] IS NOT INITIAL.
+
+            MODIFY zcap_review_it FROM TABLE lt_zcap_review_it.
+
+          ENDIF. " IF lt_zcap_review_it[] IS NOT INITIAL
+          "++SHARMH2
+
+*---------------------------------------------------------------------------*
+*       TO SEND MAIL    ***************************
+*---------------------------------------------------------------------------*
+          lw_review_mail-role           = g_role_indc.
+          lw_review_mail-review_status  = lw_zcap_review_hd-status .
+          lw_review_mail-ecr_no         = lw_zcap_review_hd-ecr_no.
+          lw_review_mail-object_id      = w_inp_ba-objid.
+          lw_review_mail-counter        = lw_zcap_review_hd-counter.
+          lw_review_mail-eta            = lw_zcap_review_hd-eta.
+          lw_review_mail-dev_hours      = lw_zcap_review_hd-dev_effort.
+          lw_review_mail-developer_id   = lw_zcap_review_hd-developer_id.
+*       lw_review_mail-DEV_MAIL_ID    = lw_zcap_review_hd-.
+          lw_review_mail-reviewer_id    = lw_zcap_review_hd-reviewer_id.
+*       lw_review_mail-REV_MAIL_ID    = lw_zcap_review_hd-.
+          lw_review_mail-iteration_no   = 1.
+          PERFORM sub_send_mail USING lw_review_mail.
+
+          MESSAGE s999 WITH 'Review is successfully submitted!'.
+          LEAVE TO SCREEN 0.
+        ENDIF. " IF l_error_flag IS INITIAL
+
+
+      WHEN c_b_approve . " APPROVE
+
+        IF g_role_indc = c_role_r
+          OR g_role_indc = c_role_a.
+
+          PERFORM sub_prep_rev_hd_approve CHANGING lw_zcap_review_hd
+                                                   lt_zcap_review_it.
+
+        ENDIF. " IF g_role_indc = c_role_r
+
+      WHEN  c_b_bt_admin. " ADMIN
+
+        PERFORM sub_back_to_admin.
+
+      WHEN c_b_dexcel  . " D_EXCEL
+        PERFORM sub_gen_code_rev_xls.
+
+      WHEN c_b_dcrc .
+        PERFORM sub_gen_code_review_checklist.
+*** Begin ADD:ALIY2:25-AUG-2021
+      WHEN c_b_sci.
+        PERFORM sub_code_inspector_error.
+*** End ADD:ALIY2:25-AUG-2021
+
+      WHEN OTHERS.
+    ENDCASE.
+
+    CLEAR: sy-ucomm,
+          g_okcode.
+
+  ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_9002  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+  MODULE user_command_9002 INPUT.
+
+    CASE sy-ucomm.
+      WHEN c_back OR c_exit OR c_cancel.
+        LEAVE TO SCREEN 0.
+
+      WHEN c_b_submit. " SUBMIT
+
+        PERFORM sub_prep_rev_hd_data_admin CHANGING lw_zcap_review_hd.
+
+      WHEN OTHERS.
+    ENDCASE.
+
+    CLEAR sy-ucomm.
+
+  ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_POPULATE_SCREEN_FLDS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_populate_screen_flds .
+
+    DATA: lt_obj_text TYPE tr_object_texts,
+          l_tr_list_w TYPE char1024, " Tr_list_w of type CHAR1024
+          l_tr_list_k TYPE char1024. " Tr_list_k of type CHAR1024
+
+    CASE sy-dynnr.
+      WHEN '9001'.
+
+        CLEAR: w_s9001_head.
+
+        w_s9001_head-ecr_no = w_inp_ba-ecrno.
+
+        w_s9001_head-edd_no = w_inp_ba-objid.
+        w_s9001_head-wbs = p_wbs.
+        w_s9001_head-project = w_inp_ba-project.
+        w_s9001_head-hours = p_dev_hr.
+        w_s9001_head-architect = w_tech_info-architect.
+        w_s9001_head-total_hr = w_tech_info-hle_sap.
+        w_s9001_head-last_rev_dt = sy-datum.
+        w_s9001_head-solm_pkg = w_inp_ba-zpackage.
+        w_s9001_head-n_ex = w_inp_ba-new_obj.
+
+        READ TABLE t_review_hd ASSIGNING FIELD-SYMBOL(<l_review_hd>)
+                        WITH KEY project = w_review_hd_act-project
+                                 prj_ref = w_review_hd_act-prj_ref
+                                 counter = w_review_hd_act-counter.
+
+        IF sy-subrc = 0.
+          IF <l_review_hd>-reviewer_id IS NOT INITIAL.
+            READ TABLE t_review_role ASSIGNING FIELD-SYMBOL(<l_review_role>)
+                                    WITH KEY user_id = <l_review_hd>-reviewer_id
+                                    BINARY SEARCH.
+            IF sy-subrc = 0.
+              CONCATENATE <l_review_role>-user_id
+                      '-'
+                      <l_review_role>-name
+                 INTO w_s9001_head-reviewer
+                 SEPARATED BY space.
+            ENDIF. " IF sy-subrc = 0
+
+          ENDIF. " IF <l_review_hd>-reviewer_id IS NOT INITIAL
+
+          IF <l_review_hd>-status IS NOT INITIAL.
+
+            READ TABLE t_taba_rev_stat ASSIGNING FIELD-SYMBOL(<l_taba>)
+                                     WITH KEY domvalue_l = <l_review_hd>-status.
+            IF sy-subrc = 0.
+              CONCATENATE <l_taba>-domvalue_l
+                  '-'
+                  <l_taba>-ddtext
+             INTO w_s9001_head-rev_status
+             SEPARATED BY space.
+            ENDIF. " IF sy-subrc = 0
+
+          ELSE. " ELSE -> IF sy-subrc = 0
+            w_s9001_head-rev_status = '1 - Initiated'.
+          ENDIF. " IF <l_review_hd>-status IS NOT INITIAL
+
+
+          w_s9001_head-hours = <l_review_hd>-dev_effort.
+          w_s9001_head-developer = <l_review_hd>-developer_id.
+          WRITE <l_review_hd>-last_rev_date TO w_s9001_head-last_rev_dt.
+          w_s9001_head-wbs = <l_review_hd>-wbs.
+          WRITE <l_review_hd>-eta TO w_s9001_head-eta.
+* Begin ADD:ALIY2:10-Mar-2021
+          CALL FUNCTION 'ZREVIEW_SET_PARAM'
+            EXPORTING
+              iv_usnam = <l_review_hd>-developer_id.
+* End ADD:ALIY2:10-Mar-2021
+
+        ENDIF. " IF sy-subrc = 0
+
+      WHEN '9002'.
+        CLEAR: w_s9001_head.
+
+        w_s9002_head-ecr_no = w_inp_ba-ecrno.
+        w_s9002_head-edd_no = w_inp_ba-objid.
+        w_s9002_head-wbs = p_wbs.
+        w_s9002_head-project = w_inp_ba-project.
+        w_s9002_head-hours = p_dev_hr.
+        w_s9002_head-architect = w_tech_info-architect.
+        w_s9002_head-total_hr = w_tech_info-hle_sap.
+
+        w_s9002_head-solm_pkg = w_inp_ba-zpackage.
+
+        w_s9002_head-n_ex = w_inp_ba-new_obj.
+
+        READ TABLE t_review_hd ASSIGNING <l_review_hd>
+                        WITH KEY project = w_review_hd_act-project
+                                 prj_ref = w_review_hd_act-prj_ref
+                                 counter = w_review_hd_act-counter.
+
+        IF sy-subrc = 0.
+          IF <l_review_hd>-reviewer_id IS NOT INITIAL.
+            READ TABLE t_review_role ASSIGNING <l_review_role>
+                                    WITH KEY user_id = <l_review_hd>-reviewer_id
+                                    BINARY SEARCH.
+            IF sy-subrc = 0.
+              CONCATENATE <l_review_role>-user_id
+                      '-'
+                      <l_review_role>-name
+                 INTO w_s9001_head-reviewer
+                 SEPARATED BY space.
+            ENDIF. " IF sy-subrc = 0
+          ENDIF. " IF <l_review_hd>-reviewer_id IS NOT INITIAL
+
+
+          READ TABLE t_taba_rev_stat ASSIGNING <l_taba>
+                                   WITH KEY domvalue_l = <l_review_hd>-status.
+          IF sy-subrc = 0.
+            CONCATENATE <l_taba>-domvalue_l
+                '-'
+                <l_taba>-ddtext
+           INTO w_s9002_head-rev_status
+           SEPARATED BY space.
+          ENDIF. " IF sy-subrc = 0
+
+          w_s9002_head-hours = <l_review_hd>-dev_effort.
+          w_s9002_head-developer = <l_review_hd>-developer_id.
+          w_s9002_head-wbs = <l_review_hd>-wbs.
+          WRITE <l_review_hd>-last_rev_date TO w_s9002_head-last_rev_dt.
+          WRITE <l_review_hd>-eta TO w_s9002_head-eta.
+        ENDIF. " IF sy-subrc = 0
+
+* Begin ADD:ALIY2:10-Mar-2021
+        CALL FUNCTION 'ZREVIEW_SET_PARAM'
+          EXPORTING
+            iv_usnam = <l_review_hd>-developer_id.
+* End ADD:ALIY2:10-Mar-2021
+      WHEN OTHERS.
+    ENDCASE.
+
+* Begin ADD:ALIY2:10-Mar-2021
+*    CALL FUNCTION 'ZREVIEW_SET_PARAM'
+*      EXPORTING
+*        iv_usnam = w_inp_ba-usnam.
+* End ADD:ALIY2:10-Mar-2021
+
+*   Populate Task List Details
+    CLEAR g_text_cts_list.
+    LOOP AT t_e070 ASSIGNING FIELD-SYMBOL(<l_e070>).
+
+      CASE <l_e070>-trfunction.
+        WHEN 'K'.
+          IF l_tr_list_k IS INITIAL.
+            l_tr_list_k = <l_e070>-trkorr.
+          ELSE. " ELSE -> IF l_tr_list_k IS INITIAL
+            CONCATENATE l_tr_list_k
+                        <l_e070>-trkorr
+                   INTO l_tr_list_k
+                   SEPARATED BY ','.
+          ENDIF. " IF l_tr_list_k IS INITIAL
+
+        WHEN 'W'.
+          IF l_tr_list_w IS INITIAL.
+            l_tr_list_w = <l_e070>-trkorr.
+          ELSE. " ELSE -> IF l_tr_list_w IS INITIAL
+            CONCATENATE l_tr_list_w
+                        <l_e070>-trkorr
+                   INTO l_tr_list_w
+                   SEPARATED BY ','.
+          ENDIF. " IF l_tr_list_w IS INITIAL
+
+        WHEN OTHERS.
+      ENDCASE.
+
+    ENDLOOP. " LOOP AT t_e070 ASSIGNING FIELD-SYMBOL(<l_e070>)
+
+    CONCATENATE 'Workbench : '
+                l_tr_list_k
+           INTO g_text_cts_list.
+
+    IF l_tr_list_w IS NOT INITIAL.
+      CONCATENATE g_text_cts_list
+                cl_abap_char_utilities=>newline
+                'Customizing : '
+                l_tr_list_w
+           INTO g_text_cts_list.
+    ELSE. " ELSE -> IF l_tr_list_w IS NOT INITIAL
+      CONCATENATE g_text_cts_list
+                cl_abap_char_utilities=>newline
+                'Customizing : '
+                'N/A'
+           INTO g_text_cts_list.
+    ENDIF. " IF l_tr_list_w IS NOT INITIAL
+
+
+*   Populate Object List Details
+    CLEAR: g_text_obj_list.
+
+    DATA(lt_e071) = t_e071[].
+    SORT lt_e071 BY trkorr pgmid object.
+    DELETE ADJACENT DUPLICATES FROM lt_e071
+                COMPARING trkorr
+                          pgmid
+                          object.
+
+
+    CALL FUNCTION 'TR_OBJECT_TABLE'
+      TABLES
+        wt_object_text = lt_obj_text.
+
+    SORT lt_obj_text BY pgmid object.
+
+    LOOP AT lt_e071 ASSIGNING FIELD-SYMBOL(<l_e071_tmp>).
+
+      IF <l_e071_tmp>-pgmid EQ 'CORR'.
+        CONTINUE.
+      ENDIF. " IF <l_e071_tmp>-pgmid EQ 'CORR'
+
+      READ TABLE lt_obj_text ASSIGNING FIELD-SYMBOL(<l_obj_txt>)
+                WITH KEY pgmid = <l_e071_tmp>-pgmid
+                   object = <l_e071_tmp>-object
+                   BINARY SEARCH.
+
+      IF sy-subrc = 0.
+        IF g_text_obj_list IS INITIAL.
+          g_text_obj_list = <l_obj_txt>-text && ':'.
+
+        ELSE. " ELSE -> IF g_text_obj_list IS INITIAL
+          CONCATENATE g_text_obj_list
+                      cl_abap_char_utilities=>newline
+                      cl_abap_char_utilities=>newline
+                      <l_obj_txt>-text ':'
+                 INTO g_text_obj_list.
+        ENDIF. " IF g_text_obj_list IS INITIAL
+      ENDIF. " IF sy-subrc = 0
+      READ TABLE t_e071 TRANSPORTING NO FIELDS
+                        WITH KEY trkorr = <l_e071_tmp>-trkorr
+                                 pgmid = <l_e071_tmp>-pgmid
+                                 object = <l_e071_tmp>-object
+                                 BINARY SEARCH.
+
+      IF sy-subrc = 0.
+        DATA(l_tabix) = sy-tabix.
+
+        LOOP AT t_e071 ASSIGNING FIELD-SYMBOL(<l_e071>) FROM l_tabix.
+
+          IF <l_e071>-trkorr NE <l_e071_tmp>-trkorr
+          OR <l_e071>-pgmid  NE <l_e071_tmp>-pgmid
+          OR <l_e071>-object NE <l_e071_tmp>-object.
+
+            EXIT.
+
+          ENDIF. " IF <l_e071>-trkorr NE <l_e071_tmp>-trkorr
+
+          CONCATENATE g_text_obj_list
+                      cl_abap_char_utilities=>newline
+                      cl_abap_char_utilities=>horizontal_tab
+                      <l_e071>-obj_name
+                 INTO g_text_obj_list.
+
+        ENDLOOP. " LOOP AT t_e071 ASSIGNING FIELD-SYMBOL(<l_e071>) FROM l_tabix
+      ENDIF. " IF sy-subrc = 0
+    ENDLOOP. " LOOP AT lt_e071 ASSIGNING FIELD-SYMBOL(<l_e071_tmp>)
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_FETCH_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_fetch_data .
+
+    DATA: lt_cts TYPE STANDARD TABLE OF trkorr. " Request/Task
+
+    IF w_inp_ba IS NOT INITIAL.
+
+      SELECT SINGLE
+             project      " Project
+             prj_ref      " Project Reference (ECR_Seq.No)
+             architect    " Technical Architect
+             tech_lead    " Technical Lead
+             developer    " Developer Name
+             hle_sap      " High Level Estimate Effort (hours) (Development)
+        FROM zcap_ecr_sap " ECR Tracking Module - Input for SAP Technical Team
+        INTO w_tech_info
+        WHERE project = w_inp_ba-project
+          AND prj_ref = w_inp_ba-prj_ref.
+      IF sy-subrc = 0.
+      ELSE. " ELSE -> IF sy-subrc = 0
+*       Incident related data
+        IF NOT w_inc_review IS INITIAL.
+          w_tech_info-project = w_inc_review-project.
+          w_tech_info-prj_ref = w_inc_review-inc_task.
+          w_tech_info-architect = w_inc_review-architect.
+          w_tech_info-developer = w_inc_review-developer.
+          w_tech_info-hle_sap = w_inc_review-effort.
+        ENDIF. " IF NOT w_inc_review IS INITIAL
+      ENDIF. " IF sy-subrc = 0
+
+      CLEAR: t_review_it[], t_review_it_act[].
+
+      IF t_review_hd IS NOT INITIAL.
+        SELECT *
+          FROM zcap_review_it " Review points table
+          INTO TABLE t_review_it
+          WHERE project = w_inp_ba-project
+            AND prj_ref = w_inp_ba-prj_ref.
+
+        IF sy-subrc = 0.
+          SORT t_review_it BY counter point_counter.
+
+*         If any existing active review entry found then take the active reivew points
+          IF w_review_hd_act IS NOT INITIAL.
+            t_review_it_act[] = t_review_it[].
+            DELETE t_review_it_act WHERE counter NE w_review_hd_act-counter.
+          ENDIF. " IF w_review_hd_act IS NOT INITIAL
+        ENDIF. " IF sy-subrc = 0
+      ENDIF. " IF t_review_hd IS NOT INITIAL
+    ENDIF. " IF w_inp_ba IS NOT INITIAL
+
+*   Check if any active entry found
+*   If found then we have to take the saved TR details
+*   Otherwise take from the Selection screen
+    IF w_review_hd_act IS NOT INITIAL.
+
+      DATA(lt_task_list) = s_tr[].
+      CLEAR: lt_task_list.
+      SPLIT w_review_hd_act-cts_details AT c_comma
+                  INTO TABLE lt_cts.
+      LOOP AT lt_cts ASSIGNING FIELD-SYMBOL(<l_cts>).
+        APPEND INITIAL LINE TO lt_task_list
+                  ASSIGNING FIELD-SYMBOL(<l_task_list>).
+        <l_task_list>-sign = c_sign_i.
+        <l_task_list>-option = c_opti_eq.
+        <l_task_list>-low = <l_cts>.
+      ENDLOOP. " LOOP AT lt_cts ASSIGNING FIELD-SYMBOL(<l_cts>)
+
+    ELSE. " ELSE -> IF w_review_hd_act IS NOT INITIAL
+
+      IF s_tr[] IS NOT INITIAL
+        OR s_task[] IS NOT INITIAL.
+
+        lt_task_list = s_tr[].
+        APPEND LINES OF s_task TO lt_task_list.
+      ENDIF. " IF s_tr[] IS NOT INITIAL
+
+    ENDIF. " IF w_review_hd_act IS NOT INITIAL
+    s_tr[] = lt_task_list[].
+    SORT s_tr BY low.
+    DELETE ADJACENT DUPLICATES FROM s_tr COMPARING low.
+    IF s_tr[] IS INITIAL.
+      MESSAGE i999 WITH 'Please enter transport details.'.
+      LEAVE LIST-PROCESSING.
+    ENDIF. " IF s_tr[] IS INITIAL
+*** Begin ADD:ALIY2:1-Aug-2019
+    PERFORM sub_get_transport_details.
+*** End ADD:ALIY2:1-Aug-2019
+    DELETE lt_task_list WHERE low+0(2) NE 'DR'.
+
+    IF lt_task_list[] IS NOT INITIAL.
+
+      SELECT trkorr     " Request/Task
+             trfunction " Type of request/task
+             strkorr    " Higher-Level Request
+        FROM e070       " Change & Transport System: Header of Requests/Tasks
+        APPENDING TABLE t_e070
+        WHERE trkorr IN lt_task_list.
+
+      IF sy-subrc = 0.
+        DATA(lt_e070) = t_e070[].
+        SORT lt_e070 BY strkorr.
+        DELETE ADJACENT DUPLICATES FROM lt_e070
+                COMPARING strkorr.
+      ENDIF. " IF sy-subrc = 0
+
+      SELECT trkorr     " Request/Task
+             trfunction " Type of request/task
+             strkorr    " Higher-Level Request
+        FROM e070       " Change & Transport System: Header of Requests/Tasks
+        APPENDING TABLE t_e070
+        FOR ALL ENTRIES IN lt_e070
+        WHERE ( trkorr = lt_e070-strkorr ).
+
+      IF sy-subrc = 0.
+      ENDIF. " IF sy-subrc = 0
+
+      lt_e070[] = t_e070[].
+      SORT lt_e070 BY trkorr.
+      DELETE ADJACENT DUPLICATES FROM lt_e070
+              COMPARING trkorr.
+      IF lt_e070[] IS NOT INITIAL.
+        SELECT trkorr " Request/Task
+           trfunction " Type of request/task
+           strkorr    " Higher-Level Request
+      FROM e070       " Change & Transport System: Header of Requests/Tasks
+      APPENDING TABLE t_e070
+      FOR ALL ENTRIES IN lt_e070
+      WHERE ( strkorr = lt_e070-trkorr ).
+      ENDIF. " IF lt_e070[] IS NOT INITIAL
+
+      IF t_e070[] IS NOT INITIAL.
+
+        SORT t_e070 BY trkorr.
+        DELETE ADJACENT DUPLICATES FROM t_e070
+                COMPARING trkorr.
+
+        SELECT trkorr   " Request/Task
+               pgmid    " Program ID in Requests and Tasks
+               object   " Object Type
+               obj_name " Object Name in Object List
+          FROM e071     " Change & Transport System: Object Entries of Requests/Tasks
+          APPENDING TABLE t_e071
+          FOR ALL ENTRIES IN t_e070
+          WHERE trkorr = t_e070-trkorr.
+
+        IF sy-subrc = 0.
+          SORT t_e071 BY trkorr pgmid object.
+        ENDIF. " IF sy-subrc = 0
+      ENDIF. " IF t_e070[] IS NOT INITIAL
+    ENDIF. " IF lt_task_list[] IS NOT INITIAL
+*** Begin ADD:ALIY2:1-Aug-2019
+    APPEND LINES OF t_e071_rfc TO t_e071.
+    SORT t_e071 BY trkorr pgmid object obj_name.
+    DELETE ADJACENT DUPLICATES FROM t_e071 COMPARING trkorr pgmid object obj_name.
+*** End ADD:ALIY2:1-Aug-2019
+    SELECT *
+      FROM zcap_review_role " Role table for Review process
+      INTO TABLE t_review_role
+      WHERE active = abap_true.
+
+    IF sy-subrc = 0.
+      SORT t_review_role BY user_id role.
+    ENDIF. " IF sy-subrc = 0
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Module  OBJECT_LIST_EDITOR  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+  MODULE object_list_editor OUTPUT.
+
+    IF g_obj_list_editor IS INITIAL.
+      CREATE OBJECT g_obj_list_editor
+        EXPORTING
+          container_name              = c_cont_obj_list
+        EXCEPTIONS
+          cntl_error                  = 1
+          cntl_system_error           = 2
+          create_error                = 3
+          lifetime_error              = 4
+          lifetime_dynpro_dynpro_link = 5.
+
+      IF sy-subrc = 0.
+
+        CREATE OBJECT g_text_editor
+          EXPORTING
+            parent                     = g_obj_list_editor
+            wordwrap_mode              = cl_gui_textedit=>wordwrap_at_fixed_position
+            wordwrap_position          = c_line_length
+            wordwrap_to_linebreak_mode = cl_gui_textedit=>true.
+
+        CALL METHOD g_text_editor->set_toolbar_mode
+          EXPORTING
+            toolbar_mode = cl_gui_textedit=>false.
+
+        CALL METHOD g_text_editor->set_statusbar_mode
+          EXPORTING
+            statusbar_mode = cl_gui_textedit=>false.
+
+        CALL METHOD g_text_editor->set_readonly_mode
+          EXPORTING
+            readonly_mode = cl_gui_textedit=>true.
+      ENDIF. " IF sy-subrc = 0
+    ENDIF. " IF g_obj_list_editor IS INITIAL
+
+    CALL METHOD g_text_editor->set_textstream
+      EXPORTING
+        text = g_text_obj_list.
+
+  ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_SET_DRP_DWN_TAB
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_set_drp_dwn_tab .
+
+    DATA:
+      lt_taba TYPE STANDARD TABLE OF dd07v, " Generated Table for View
+      lt_tabb TYPE STANDARD TABLE OF dd07v, " Generated Table for View
+      lt_dral TYPE lvc_t_dral.
+
+*----------------------------------------------------------------------*
+*  Prepare dropdown for Defect Category
+*----------------------------------------------------------------------*
+
+    LOOP AT t_taba_def_catg ASSIGNING FIELD-SYMBOL(<l_taba>) .
+
+      APPEND INITIAL LINE TO lt_dral ASSIGNING FIELD-SYMBOL(<l_dral>).
+      <l_dral>-handle = '1'.
+      CONCATENATE <l_taba>-domvalue_l
+                  '-'
+                  <l_taba>-ddtext
+             INTO <l_dral>-value
+             SEPARATED BY space.
+
+      "internal value , in your case it is C
+*      <l_dral>-INT_VALUE =  ITAB-POSNR.
+
+    ENDLOOP. " LOOP AT t_taba_def_catg ASSIGNING FIELD-SYMBOL(<l_taba>)
+
+*----------------------------------------------------------------------*
+*  Prepare dropdown for Priority
+*----------------------------------------------------------------------*
+*----------------------------------------------------------------------*
+*  Prepare dropdown for Defect Sub Category
+*----------------------------------------------------------------------*
+
+    LOOP AT t_defect_subcat ASSIGNING FIELD-SYMBOL(<lwa_subcat>) .
+
+      APPEND INITIAL LINE TO lt_dral ASSIGNING <l_dral>.
+      <l_dral>-handle = '2'.
+      CONCATENATE <lwa_subcat>-defect_subcat
+                  '-'
+                  <lwa_subcat>-defect_subcatt
+             INTO <l_dral>-value
+             SEPARATED BY space.
+    ENDLOOP. " LOOP AT t_defect_subcat ASSIGNING FIELD-SYMBOL(<lwa_subcat>)
+
+    LOOP AT t_taba_prio ASSIGNING <l_taba> .
+
+      APPEND INITIAL LINE TO lt_dral ASSIGNING <l_dral>.
+      <l_dral>-handle = '3'.
+      CONCATENATE <l_taba>-domvalue_l
+                  '-'
+                  <l_taba>-ddtext
+             INTO <l_dral>-value
+             SEPARATED BY space.
+
+    ENDLOOP. " LOOP AT t_taba_prio ASSIGNING <l_taba>
+
+*----------------------------------------------------------------------*
+*  Prepare dropdown for Defect status
+*----------------------------------------------------------------------*
+
+    LOOP AT t_taba_def_stat ASSIGNING <l_taba> .
+
+      APPEND INITIAL LINE TO lt_dral ASSIGNING <l_dral>.
+      <l_dral>-handle = '4'.
+      CONCATENATE <l_taba>-domvalue_l
+                  '-'
+                  <l_taba>-ddtext
+             INTO <l_dral>-value
+             SEPARATED BY space.
+
+    ENDLOOP. " LOOP AT t_taba_def_stat ASSIGNING <l_taba>
+
+    IF go_alv_part IS BOUND.
+
+*     Setting the Drop down table for Reason Code
+      CALL METHOD go_alv_part->set_drop_down_table
+        EXPORTING
+          it_drop_down_alias = lt_dral.
+    ENDIF. " IF go_alv_part IS BOUND
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Module  CTS_LIST_EDITOR  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+  MODULE cts_list_editor OUTPUT.
+
+    IF g_cts_list_editor IS INITIAL.
+      CREATE OBJECT g_cts_list_editor
+        EXPORTING
+          container_name              = c_cont_cts_list
+        EXCEPTIONS
+          cntl_error                  = 1
+          cntl_system_error           = 2
+          create_error                = 3
+          lifetime_error              = 4
+          lifetime_dynpro_dynpro_link = 5.
+
+      IF sy-subrc = 0.
+
+        CREATE OBJECT g_text_editor_cts
+          EXPORTING
+            parent                     = g_cts_list_editor
+            wordwrap_mode              = cl_gui_textedit=>wordwrap_at_fixed_position
+            wordwrap_position          = c_line_length
+            wordwrap_to_linebreak_mode = cl_gui_textedit=>true.
+
+        CALL METHOD g_text_editor_cts->set_toolbar_mode
+          EXPORTING
+            toolbar_mode = cl_gui_textedit=>false.
+
+        CALL METHOD g_text_editor_cts->set_statusbar_mode
+          EXPORTING
+            statusbar_mode = cl_gui_textedit=>false.
+
+        CALL METHOD g_text_editor_cts->set_readonly_mode
+          EXPORTING
+            readonly_mode = cl_gui_textedit=>true.
+      ENDIF. " IF sy-subrc = 0
+    ENDIF. " IF g_cts_list_editor IS INITIAL
+
+    CALL METHOD g_text_editor_cts->set_textstream
+      EXPORTING
+        text = g_text_cts_list.
+
+  ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_PREP_REV_HD_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_prep_rev_hd_data CHANGING p_w_zcap_review_hd TYPE zcap_review_hd. " Header table for review process tracking
+
+    DATA: lw_zcap_review_hd TYPE zcap_review_hd, " Header table for review process tracking
+          l_id              TYPE syst_uname,     " ABAP System Field: Name of Current User
+          l_name            TYPE char100.        " Name of type CHAR100
+
+
+    IF w_review_hd_act-counter IS NOT INITIAL.
+
+      lw_zcap_review_hd = w_review_hd_act.
+
+    ELSE. " ELSE -> IF w_review_hd_act-counter IS NOT INITIAL
+
+      READ TABLE t_review_hd TRANSPORTING NO FIELDS
+                      WITH KEY project = w_inp_ba-project
+                               prj_ref = w_inp_ba-prj_ref
+                               BINARY SEARCH.
+
+      IF sy-subrc = 0.
+
+        DATA(lt_review_hd) = t_review_hd[].
+        SORT lt_review_hd BY counter DESCENDING.
+
+        READ TABLE lt_review_hd ASSIGNING FIELD-SYMBOL(<l_review_hd>) INDEX 1.
+        IF sy-subrc = 0.
+          lw_zcap_review_hd-counter = <l_review_hd>-counter + 1.
+        ENDIF. " IF sy-subrc = 0
+
+      ELSE. " ELSE -> IF sy-subrc = 0
+
+        lw_zcap_review_hd-counter = 1.
+
+      ENDIF. " IF sy-subrc = 0
+
+      lw_zcap_review_hd-mandt = sy-mandt.
+      lw_zcap_review_hd-project = w_inp_ba-project.
+      lw_zcap_review_hd-prj_ref = w_inp_ba-prj_ref.
+      lw_zcap_review_hd-ecr_no = w_inp_ba-ecrno.
+*      IF   sy-uname = 'BARDHS2' OR
+*             sy-uname = 'MAZUMS4' OR
+*             sy-uname = 'CHATTS4' OR
+*             sy-uname = 'DASC2'
+*         OR sy-uname = 'CHATUD2'.
+        lw_zcap_review_hd-objid = w_inp_ba-objid.
+*      ENDIF. " IF sy-uname = 'BARDHS2' OR
+
+      lw_zcap_review_hd-wbs = p_wbs.
+      lw_zcap_review_hd-dev_effort = p_dev_hr.
+      IF w_s9001_head-reviewer IS NOT INITIAL.
+        SPLIT w_s9001_head-reviewer AT ':' INTO l_name l_id.
+      ENDIF. " IF w_s9001_head-reviewer IS NOT INITIAL
+      lw_zcap_review_hd-reviewer_id = l_id.
+      lw_zcap_review_hd-reviewer_name = l_name.
+      lw_zcap_review_hd-developer_id = sy-uname.
+      lw_zcap_review_hd-erdat = sy-datum.
+      lw_zcap_review_hd-eta = p_eta.
+
+      LOOP AT t_e070 ASSIGNING FIELD-SYMBOL(<l_e070>).
+        IF lw_zcap_review_hd-cts_details IS INITIAL.
+          lw_zcap_review_hd-cts_details = <l_e070>-trkorr.
+
+        ELSE. " ELSE -> IF lw_zcap_review_hd-cts_details IS INITIAL
+          CONCATENATE lw_zcap_review_hd-cts_details
+                      c_comma <l_e070>-trkorr
+                 INTO lw_zcap_review_hd-cts_details.
+        ENDIF. " IF lw_zcap_review_hd-cts_details IS INITIAL
+      ENDLOOP. " LOOP AT t_e070 ASSIGNING FIELD-SYMBOL(<l_e070>)
+
+    ENDIF. " IF w_review_hd_act-counter IS NOT INITIAL
+
+*   =========================================
+*   Changing Status accordingly
+*   =========================================
+*   1) It will be 'Initiate' if reviewer not assigned yet
+*   2) It will be 'In Progress' if reviewer assigned and any in active point is there
+    IF lw_zcap_review_hd-reviewer_id IS INITIAL.
+
+      lw_zcap_review_hd-status = '1'.
+
+    ELSE. " ELSE -> IF lw_zcap_review_hd-reviewer_id IS INITIAL
+
+      READ TABLE t_points_tab TRANSPORTING NO FIELDS
+                        WITH KEY status = '1 - Open'.
+      IF sy-subrc = 0.
+        lw_zcap_review_hd-status = '2'.
+
+      ENDIF. " IF sy-subrc = 0
+
+    ENDIF. " IF lw_zcap_review_hd-reviewer_id IS INITIAL
+
+    lw_zcap_review_hd-last_rev_date = sy-datum.
+ "--SHARMH2
+    MODIFY zcap_review_hd FROM lw_zcap_review_hd.
+ "--SHARMH2
+    p_w_zcap_review_hd = lw_zcap_review_hd.
+
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_PREP_REV_IT_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_prep_rev_it_data USING p_w_zcap_review_hd TYPE zcap_review_hd " Header table for review process tracking
+                            CHANGING p_error_f TYPE flag                 " General Flag
+                                                                         "++SHARMH2
+                            lt_zcap_review_it TYPE ty_zcap_review_it.    " Review points table
+
+    DATA: l_point_counter   TYPE int1. " Dummy for B20 int1 (Local Everywhere)
+*          lt_zcap_review_it TYPE STANDARD TABLE OF zcap_review_it INITIAL SIZE 0. " Review points table
+
+    DATA(lt_review_it) = t_review_it_act[].
+    SORT lt_review_it BY point_counter DESCENDING.
+    READ TABLE lt_review_it ASSIGNING FIELD-SYMBOL(<l_review_it>) INDEX 1.
+    IF sy-subrc = 0.
+      l_point_counter = <l_review_it>-point_counter.
+
+    ENDIF. " IF sy-subrc = 0
+
+    LOOP AT t_points_tab ASSIGNING FIELD-SYMBOL(<l_points_tab>).
+
+      IF <l_points_tab>-issue_desc IS INITIAL.
+
+        p_error_f = abap_true.
+        MESSAGE s999 WITH 'Issue description is empty for line' sy-tabix '.' DISPLAY LIKE 'E'.
+
+      ELSEIF <l_points_tab>-defect_cat IS INITIAL.
+
+        p_error_f = abap_true.
+        MESSAGE s999 WITH 'Defect category is empty for line' sy-tabix '.' DISPLAY LIKE 'E'.
+*      ELSEIF <l_points_tab>-defect_subcat IS INITIAL.
+*
+*        p_error_f = abap_true.
+*        MESSAGE s999 WITH 'Defect Sub Category is empty for line' sy-tabix '.' DISPLAY LIKE 'E'.
+
+      ELSEIF <l_points_tab>-obj_name IS INITIAL.
+
+        p_error_f = abap_true.
+        MESSAGE s999 WITH 'Object name is empty for line' sy-tabix '.' DISPLAY LIKE 'E'.
+
+      ELSEIF <l_points_tab>-obj_type IS INITIAL.
+
+        p_error_f = abap_true.
+        MESSAGE s999 WITH 'Object type is empty for line' sy-tabix '.' DISPLAY LIKE 'E'.
+
+      ELSEIF <l_points_tab>-priority IS INITIAL.
+
+        p_error_f = abap_true.
+        MESSAGE s999 WITH 'Defect priority is empty for line' sy-tabix '.' DISPLAY LIKE 'E'.
+      ENDIF. " IF <l_points_tab>-issue_desc IS INITIAL
+
+      IF p_error_f IS INITIAL.
+
+        APPEND INITIAL LINE TO lt_zcap_review_it
+                    ASSIGNING FIELD-SYMBOL(<l_zcap_review_it>).
+
+*       If pointer counter is assinged then the point is previosly entered and stored in the database
+        IF <l_points_tab>-issue_no IS INITIAL.
+          l_point_counter = l_point_counter + 1.
+          <l_zcap_review_it>-point_counter  = l_point_counter.
+
+        ELSE. " ELSE -> IF <l_points_tab>-issue_no IS INITIAL
+          <l_zcap_review_it>-point_counter  = <l_points_tab>-issue_no.
+        ENDIF. " IF <l_points_tab>-issue_no IS INITIAL
+
+        <l_zcap_review_it>-mandt          = sy-mandt.
+        <l_zcap_review_it>-project        = w_inp_ba-project.
+        <l_zcap_review_it>-prj_ref        = w_inp_ba-prj_ref.
+*        IF   sy-uname = 'BARDHS2' OR
+*             sy-uname = 'MAZUMS4' OR
+*             sy-uname = 'CHATTS4' OR
+*             sy-uname = 'DASC2'
+*           OR sy-uname = 'CHATUD2'.
+          <l_zcap_review_it>-objid = w_inp_ba-objid.
+*        ENDIF. " IF sy-uname = 'BARDHS2' OR
+        <l_zcap_review_it>-counter        = p_w_zcap_review_hd-counter.
+        <l_zcap_review_it>-change_date    = sy-datum.
+        <l_zcap_review_it>-change_time    = sy-uzeit.
+        <l_zcap_review_it>-obj_name       = <l_points_tab>-obj_name.
+        <l_zcap_review_it>-obj_type       = <l_points_tab>-obj_type      .
+        <l_zcap_review_it>-subroutine     = <l_points_tab>-subroutine    .
+        <l_zcap_review_it>-line_no        = <l_points_tab>-line_no       .
+        <l_zcap_review_it>-issue_desc     = <l_points_tab>-issue_desc    .
+        <l_zcap_review_it>-defect_cat     = <l_points_tab>-defect_cat    .
+        <l_zcap_review_it>-priority       = <l_points_tab>-priority      .
+        <l_zcap_review_it>-last_rev_date  = sy-datum .
+*        <l_zcap_review_it>-last_rev_date  = <l_points_tab>-last_rev_date .
+        <l_zcap_review_it>-reviewer_comm  = <l_points_tab>-reviewer_comm .
+        <l_zcap_review_it>-developer_comm = <l_points_tab>-developer_comm.
+        <l_zcap_review_it>-status         = <l_points_tab>-status.
+        <l_zcap_review_it>-defect_subcat  = <l_points_tab>-defect_subcat.
+
+      ENDIF. " IF p_error_f IS INITIAL
+    ENDLOOP. " LOOP AT t_points_tab ASSIGNING FIELD-SYMBOL(<l_points_tab>)
+    "--SHARMH2
+*    IF p_error_f IS INITIAL
+*      AND lt_zcap_review_it[] IS NOT INITIAL.
+*
+*      MODIFY zcap_review_it FROM TABLE lt_zcap_review_it.
+*
+*    ENDIF. " IF p_error_f IS INITIAL
+ "--SHARMH2
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_INITIALIZATION
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_initialization .
+    DATA: l_confirm_val TYPE char1. " Confirm_val of type CHAR1
+    CLEAR: w_points_tab,
+           t_points_tab[],
+           t_e070[],
+           t_e071[],
+           t_review_it[],
+           t_review_it_act[],
+           t_taba_prio[],
+           t_taba_def_catg[],
+           t_taba_rev_stat[],
+           t_taba_def_stat[],
+           t_review_lock_data[].
+
+
+    CLEAR: g_tr             ,
+           g_task           ,
+           w_tech_info      ,
+           w_layout         ,
+           w_s9001_head     ,
+           g_cont           ,
+           go_alv_part      ,
+           g_obj_list_editor,
+           g_cts_list_editor,
+           w_toolbar        ,
+           e_object         ,
+           go_event_receiver,
+           g_text_editor    ,
+           g_text_editor_cts,
+           g_text_obj_list  ,
+           g_text_cts_list  .
+
+    IF p_ecr_no IS INITIAL.
+      MESSAGE e999 WITH 'Please enter ECR Number'.
+      LEAVE LIST-PROCESSING.
+    ENDIF. " IF p_ecr_no IS INITIAL
+
+*Begin of BARTHR3 : 12th-may-2023
+    CONSTANTS : lc_role TYPE z_review_role VALUE 'A'. " Role for review process
+*   Select the Table to check if SKIP_SCI is Checked
+    SELECT SINGLE * FROM zcap_review_role INTO @DATA(ls_review_role)
+      WHERE user_id      = @sy-uname  AND
+            role         = @lc_role   AND
+            active       = @abap_true AND
+            skip_sci_chk = @abap_true.
+
+    IF sy-subrc IS  INITIAL AND ls_review_role IS NOT INITIAL.
+*     Check if Skip SCI is maintained againt the USERID
+      DATA(lv_skip_sci_chk) = ls_review_role-skip_sci_chk.
+    ENDIF. " IF sy-subrc IS INITIAL AND ls_review_role IS NOT INITIAL
+*End of  BARTHR3 : 12th-may-2023
+
+* Begin ADD:ALIY2:28-Oct-2021
+    DATA:lt_list TYPE scit_alvlistn,
+         lt_tr   TYPE tt_tr.
+    lt_tr[] = VALUE #( FOR ls_tr IN s_tr ( trkorr = ls_tr-low ) ).
+
+*Begin of BARTHR3 : 12th-may-2023
+**--In some cases program give dump , while checking the SCI errors and warning.
+**--Thus we add a logic to skip the SCI check IF:-
+**--ZCAP_REVIEW_ROLE-SKIP_SCI_CHK = X then Skip the SCI check.
+    IF lv_skip_sci_chk = abap_false.
+*End of  barthr3 : 12th-may-2023
+
+      PERFORM sub_get_sci_details USING lt_tr
+                                  CHANGING lt_list.
+
+*Begin of BARTHR3 : 12th-may-2023
+      CLEAR:lv_skip_sci_chk.
+    ENDIF. " IF lv_skip_sci_chk = abap_false
+*End of  barthr3 : 12th-may-2023
+
+    IF lt_list IS NOT INITIAL.
+      CALL FUNCTION 'POPUP_TO_CONFIRM'
+        EXPORTING
+          titlebar              = 'Confirmation'
+          text_question         = 'SCI/CVA error exist.Do you want to continue?'
+          text_button_1         = 'Yes'
+          text_button_2         = 'No'
+          default_button        = c_answer_2
+          display_cancel_button = abap_false
+        IMPORTING
+          answer                = l_confirm_val
+        EXCEPTIONS
+          text_not_found        = 1
+          OTHERS                = 2.
+      IF sy-subrc <> 0.
+        MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+        WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+      ENDIF. " IF sy-subrc <> 0
+    ENDIF. " IF lt_list IS NOT INITIAL
+    IF l_confirm_val IS NOT INITIAL. " DEL:ALIY2:1-Aug-2019
+      IF l_confirm_val = c_answer_2.
+        MESSAGE s999 WITH 'Action is cancelled by user' DISPLAY LIKE 'E'.
+        LEAVE TO SCREEN 1000.
+      ENDIF. " IF l_confirm_val = c_answer_2
+    ENDIF. " IF g_initiate_f IS NOT INITIAL
+* End ADD:ALIY2:28-Oct-2021
+    IF g_initiate_f IS NOT INITIAL.
+
+      CALL FUNCTION 'POPUP_TO_CONFIRM'
+        EXPORTING
+          titlebar              = 'Confirmation '
+          text_question         = 'There is no active review session. Do you want to initiate a new one ?'
+          text_button_1         = 'Yes'
+          text_button_2         = 'No'
+          default_button        = c_answer_2
+          display_cancel_button = abap_false
+        IMPORTING
+*         answer                = l_confirm_val " DEL:ALIY2:1-Aug-2019
+          answer                = g_confirm_val " DEL:ALIY2:1-Aug-2019
+        EXCEPTIONS
+          text_not_found        = 1
+          OTHERS                = 2.
+      IF sy-subrc <> 0.
+        MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+        WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+      ENDIF. " IF sy-subrc <> 0
+
+*      IF l_confirm_val IS NOT INITIAL.  " DEL:ALIY2:1-Aug-2019
+      IF g_confirm_val IS NOT INITIAL. " DEL:ALIY2:1-Aug-2019
+        IF g_confirm_val = c_answer_2.
+          MESSAGE s999 WITH 'Action is cancelled by user' DISPLAY LIKE 'E'.
+          LEAVE TO SCREEN 1000.
+        ENDIF. " IF g_confirm_val = c_answer_2
+      ENDIF. " IF g_initiate_f IS NOT INITIAL
+    ENDIF. " IF g_initiate_f IS NOT INITIAL
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_PRE_POINTS_TAB
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_pre_points_tab .
+
+
+    LOOP AT t_review_it_act ASSIGNING FIELD-SYMBOL(<l_review_it>).
+
+      APPEND INITIAL LINE TO t_points_tab ASSIGNING FIELD-SYMBOL(<l_points_tab>).
+
+      <l_points_tab>-defect_cat     = <l_review_it>-defect_cat     .
+      <l_points_tab>-issue_no       = <l_review_it>-point_counter  .
+      <l_points_tab>-obj_name       = <l_review_it>-obj_name       .
+      <l_points_tab>-obj_type       = <l_review_it>-obj_type       .
+      <l_points_tab>-subroutine     = <l_review_it>-subroutine     .
+      <l_points_tab>-line_no        = <l_review_it>-line_no        .
+      <l_points_tab>-issue_desc     = <l_review_it>-issue_desc     .
+      READ TABLE t_taba_def_catg ASSIGNING FIELD-SYMBOL(<l_taba>)
+                                 WITH KEY domvalue_l = <l_review_it>-defect_cat.
+      IF sy-subrc = 0.
+        CONCATENATE <l_taba>-domvalue_l
+                  '-'
+                  <l_taba>-ddtext
+             INTO <l_points_tab>-defect_cat
+             SEPARATED BY space.
+      ENDIF. " IF sy-subrc = 0
+
+*Pick Sub category based on Defect Category selected
+      READ TABLE t_defect_subcat ASSIGNING FIELD-SYMBOL(<lwa_subcat>)
+                                          WITH KEY defect_subcat = <l_review_it>-defect_subcat.
+      IF sy-subrc = 0.
+        CONCATENATE <lwa_subcat>-defect_subcat '-' <lwa_subcat>-defect_subcatt INTO <l_points_tab>-defect_subcat SEPARATED BY space.
+      ENDIF. " IF sy-subrc = 0
+
+      READ TABLE t_taba_prio ASSIGNING <l_taba>
+                           WITH KEY domvalue_l = <l_review_it>-priority.
+      IF sy-subrc = 0.
+        CONCATENATE <l_taba>-domvalue_l
+                  '-'
+                  <l_taba>-ddtext
+             INTO <l_points_tab>-priority
+             SEPARATED BY space.
+      ENDIF. " IF sy-subrc = 0
+
+      <l_points_tab>-last_rev_date  = <l_review_it>-last_rev_date  .
+      <l_points_tab>-reviewer_comm  = <l_review_it>-reviewer_comm  .
+      <l_points_tab>-developer_comm = <l_review_it>-developer_comm .
+
+      READ TABLE t_taba_def_stat ASSIGNING <l_taba>
+                           WITH KEY domvalue_l = <l_review_it>-status.
+      IF sy-subrc = 0.
+        CONCATENATE <l_taba>-domvalue_l
+                  '-'
+                  <l_taba>-ddtext
+             INTO <l_points_tab>-status
+             SEPARATED BY space.
+      ENDIF. " IF sy-subrc = 0
+
+    ENDLOOP. " LOOP AT t_review_it_act ASSIGNING FIELD-SYMBOL(<l_review_it>)
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      MODULE  SUB_REVIEWER_DRP_DWN
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  MODULE sub_reviewer_drp_dwn OUTPUT.
+
+    DATA: l_name   TYPE vrm_id,
+          lt_list  TYPE STANDARD TABLE OF vrm_value INITIAL SIZE 0,
+          lw_value TYPE vrm_value.
+
+
+    CLEAR lt_list[].
+
+    l_name = 'W_S9002_HEAD-REVIEWER'.
+
+    DATA(lt_reviewer) = t_review_role[].
+    SORT lt_reviewer BY role user_id .
+    DELETE lt_reviewer WHERE role NE 'R'.
+
+    LOOP AT lt_reviewer ASSIGNING FIELD-SYMBOL(<l_reviewer>).
+      CLEAR lw_value.
+      lw_value-key = <l_reviewer>-name && ' : ' && <l_reviewer>-user_id.
+      lw_value-text = <l_reviewer>-name && ' : ' && <l_reviewer>-user_id.
+      APPEND lw_value TO lt_list.
+    ENDLOOP. " LOOP AT lt_reviewer ASSIGNING FIELD-SYMBOL(<l_reviewer>)
+
+*   Set the values
+    CALL FUNCTION 'VRM_SET_VALUES'
+      EXPORTING
+        id     = l_name
+        values = lt_list.
+
+  ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_DETERMINE_ROLE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_G_ROLE_INDC  text
+*----------------------------------------------------------------------*
+  FORM sub_determine_role  CHANGING p_g_role_indc TYPE z_review_role. " Role for review process
+
+    READ TABLE t_review_role ASSIGNING FIELD-SYMBOL(<l_review_role>)
+                                WITH KEY user_id = sy-uname
+                                BINARY SEARCH.
+    IF sy-subrc <> 0.
+      MESSAGE i999 WITH 'You are not authorized to this transaction.' 'Please reach to admin'.
+      LEAVE LIST-PROCESSING.
+    ENDIF. " IF sy-subrc <> 0
+
+*  1) Check if any record found with active status for any under going review for the same ECR.
+*  2) If found and reviewer id is empty then check the user is admin or not if admin then give ADMIN ROLE.
+*  3) If found then Check the user name with reviewer ID if matches then give the REVIEWER ROLE.
+*  4) If the user name matches with the developer id then give the DEVELOPER ROLE.
+*  5) If entry not found then give the DEVELOPER ROLE
+
+    READ TABLE t_review_hd ASSIGNING FIELD-SYMBOL(<l_review_hd>)
+                           WITH KEY counter = w_review_hd_act-counter.
+
+    IF sy-subrc = 0.
+
+*     If the status is Approved then the report will be shown in display mode irrespective of role
+      IF w_review_hd_act-status = '3'. " Approved
+        p_g_role_indc = c_role_o.
+        RETURN.
+      ENDIF. " IF sy-subrc = 0
+
+      IF <l_review_hd>-reviewer_id IS INITIAL.
+
+        READ TABLE t_review_role ASSIGNING <l_review_role>
+                                WITH KEY user_id = sy-uname
+                                         role = c_role_a
+                                BINARY SEARCH.
+        IF sy-subrc = 0.
+
+          p_g_role_indc = c_role_a.
+
+        ELSE. " ELSE -> IF sy-subrc = 0
+          MESSAGE s999 WITH 'One open review request exists.' 'Object is not assigned to any Reviewer yet'.
+          LEAVE LIST-PROCESSING.
+        ENDIF. " IF sy-subrc = 0
+
+      ENDIF. " IF <l_review_hd>-reviewer_id IS INITIAL
+
+
+      IF <l_review_hd>-reviewer_id = sy-uname.
+        p_g_role_indc = c_role_r.
+
+      ELSEIF <l_review_hd>-developer_id = sy-uname.
+        p_g_role_indc = c_role_d.
+
+      ELSE. " ELSE -> IF <l_review_hd>-reviewer_id = sy-uname
+        READ TABLE t_review_role ASSIGNING <l_review_role>
+                                WITH KEY user_id = sy-uname
+                                         role = c_role_a
+                                BINARY SEARCH.
+        IF sy-subrc = 0.
+          p_g_role_indc = c_role_a.
+
+        ENDIF. " IF sy-subrc = 0
+      ENDIF. " IF <l_review_hd>-reviewer_id = sy-uname
+
+*     If not role is set then we will give the user the DISPLAY ONLY access
+      IF p_g_role_indc IS INITIAL.
+        IF <l_review_hd>-reviewer_id IS NOT INITIAL
+          AND <l_review_hd>-admin_id IS NOT INITIAL.
+
+          p_g_role_indc = c_role_o.
+        ENDIF. " IF <l_review_hd>-reviewer_id IS NOT INITIAL
+      ENDIF. " IF p_g_role_indc IS INITIAL
+
+    ELSE. " ELSE -> IF <l_review_hd>-reviewer_id IS NOT INITIAL
+
+      READ TABLE t_review_role ASSIGNING <l_review_role>
+                              WITH KEY user_id = sy-uname
+                                       role = c_role_d
+                              BINARY SEARCH.
+      IF sy-subrc = 0.
+
+        p_g_role_indc = c_role_d.
+
+      ENDIF. " IF sy-subrc = 0
+
+    ENDIF. " IF sy-subrc = 0
+
+    IF p_g_role_indc = c_role_d AND
+      w_review_hd_act-status = '1'.
+
+      MESSAGE i999 WITH 'One open review request exists.' 'Review is pending with Admin.' 'Please reach to them.'.
+      LEAVE LIST-PROCESSING.
+    ENDIF. " IF p_g_role_indc = c_role_d AND
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_ALV_BUTTON_EXCLUDE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_T_EXCLUDE  text
+*----------------------------------------------------------------------*
+  FORM sub_alv_button_exclude  CHANGING p_t_exclude TYPE rsd_t_func. " Function Code
+
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING FIELD-SYMBOL(<l_exclude>).
+    <l_exclude> = cl_gui_alv_grid=>mc_fc_detail.
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+    <l_exclude> = cl_gui_alv_grid=>mc_fc_loc_undo.
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+    <l_exclude> = cl_gui_alv_grid=>mc_fc_views.
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+    <l_exclude> = cl_gui_alv_grid=>mc_fc_loc_copy_row.
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+    <l_exclude> = cl_gui_alv_grid=>mc_fc_loc_copy.
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+    <l_exclude> = cl_gui_alv_grid=>mc_fc_loc_paste.
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+    <l_exclude> = cl_gui_alv_grid=>mc_fc_loc_paste_new_row.
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+    <l_exclude> = cl_gui_alv_grid=>mc_fc_check.
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+    <l_exclude> = cl_gui_alv_grid=>mc_fc_graph.
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+    <l_exclude> = cl_gui_alv_grid=>mc_fc_refresh.
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+    <l_exclude> = cl_gui_alv_grid=>mc_fc_loc_cut.
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+    <l_exclude> = cl_gui_alv_grid=>mc_mb_export.
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+    <l_exclude> = cl_gui_alv_grid=>mc_fc_print.
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+    <l_exclude> = cl_gui_alv_grid=>mc_fc_views.
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+    <l_exclude> = cl_gui_alv_grid=>mc_fc_sum.
+    APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+    <l_exclude> = cl_gui_alv_grid=>mc_fc_subtot.
+
+    IF g_role_indc = c_role_d.
+      APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+      <l_exclude> = cl_gui_alv_grid=>mc_fc_loc_insert_row.
+      APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+      <l_exclude> = cl_gui_alv_grid=>mc_fc_loc_delete_row.
+      APPEND INITIAL LINE TO p_t_exclude ASSIGNING <l_exclude>.
+      <l_exclude> = cl_gui_alv_grid=>mc_fc_loc_append_row.
+    ENDIF. " IF g_role_indc = c_role_d
+
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Module  SUB_HIDE_BUTTONS_9001  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+  FORM sub_hide_buttons_9001 CHANGING p_t_extab TYPE slis_t_extab.
+    IF g_role_indc = c_role_d.
+
+      APPEND INITIAL LINE TO p_t_extab ASSIGNING FIELD-SYMBOL(<l_extab>).
+      <l_extab> = c_b_bt_admin.
+      APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+      <l_extab> = c_b_approve.
+
+      IF w_review_hd_act-status = '2'.
+        APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+        <l_extab> = c_b_dexcel.
+      ENDIF. " IF w_review_hd_act-status = '2'
+*** Begin ADD:ALIY2:25-AUG-2021
+      APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+      <l_extab> = c_b_sci.
+*** End ADD:ALIY2:25-AUG-2021
+
+    ELSEIF g_role_indc = c_role_r.
+
+      APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+      <l_extab> = c_b_bt_admin.
+      IF w_review_hd_act-status = '2'.
+        APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+        <l_extab> = c_b_dexcel.
+      ENDIF. " IF w_review_hd_act-status = '2'
+*** Begin ADD:ALIY2:25-AUG-2021
+*      IF w_review_hd_act-status = '2' AND gv_flag = abap_false.
+*        APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+*        <l_extab> = c_b_approve.
+*      ELSE.
+*        DELETE p_t_extab  WHERE  fcode EQ c_b_approve.
+*      ENDIF.
+*      APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+*      <l_extab> = c_b_sci.
+*** End ADD:ALIY2:25-AUG-2021
+
+    ELSEIF g_role_indc = c_role_a.
+
+      IF w_review_hd_act-status = '1'.
+        APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+        <l_extab> = c_b_bt_admin.
+      ELSEIF w_review_hd_act-status = '2'.
+        APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+        <l_extab> = c_b_submit.
+        APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+        <l_extab> = c_b_dexcel.
+      ENDIF. " IF w_review_hd_act-status = '1'
+*** Begin ADD:ALIY2:25-AUG-2021
+      APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+      <l_extab> = c_b_sci.
+*** End ADD:ALIY2:25-AUG-2021
+    ELSEIF g_role_indc = c_role_o.
+      APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+      <l_extab> = c_b_bt_admin.
+      APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+      <l_extab> = c_b_approve.
+      APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+      <l_extab> = c_b_submit.
+*** Begin ADD:ALIY2:25-AUG-2021
+      APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+      <l_extab> = c_b_sci.
+*** End ADD:ALIY2:25-AUG-2021
+    ENDIF. " IF g_role_indc = c_role_d
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Module  SUB_HIDE_BUTTONS_9001  OUTPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+  FORM sub_hide_buttons_9002 CHANGING p_t_extab TYPE slis_t_extab.
+
+    IF g_role_indc = c_role_a.
+
+      APPEND INITIAL LINE TO p_t_extab ASSIGNING FIELD-SYMBOL(<l_extab>).
+      <l_extab> = c_b_approve.
+
+      APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+      <l_extab> = c_b_dexcel.
+
+      APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+      <l_extab> = c_b_bt_admin.
+*** Begin ADD:ALIY2:25-AUG-2021
+      APPEND INITIAL LINE TO p_t_extab ASSIGNING <l_extab>.
+      <l_extab> = c_b_sci.
+*** End ADD:ALIY2:25-AUG-2021
+    ENDIF. " IF g_role_indc = c_role_a
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_PREP_REV_HD_DATA_ADMIN
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_LW_ZCAP_REVIEW_HD  text
+*----------------------------------------------------------------------*
+  FORM sub_prep_rev_hd_data_admin  CHANGING p_w_zcap_review_hd.
+
+    DATA: l_id           TYPE syst_uname,               " ABAP System Field: Name of Current User
+          l_name         TYPE char100,                  " Name of type CHAR100
+          lw_review_mail TYPE zcap_review_mail_details. " Structure required to send mail
+
+    IF w_s9002_head-reviewer IS INITIAL.
+      MESSAGE s999 WITH 'Please choose a Reviewer!' DISPLAY LIKE 'E'.
+      RETURN.
+    ENDIF. " IF w_s9002_head-reviewer IS INITIAL
+
+    READ TABLE t_review_hd ASSIGNING FIELD-SYMBOL(<l_review_hd>)
+                        WITH KEY project = w_inp_ba-project
+                                 prj_ref = w_inp_ba-prj_ref
+                                 BINARY SEARCH.
+
+    IF sy-subrc = 0.
+
+      lw_zcap_review_hd = <l_review_hd>.
+
+      lw_zcap_review_hd-last_rev_date = sy-datum.
+*      SPLIT w_s9002_head-reviewer AT ':' INTO l_name l_id.
+      lw_zcap_review_hd-reviewer_id = w_s9002_head-reviewer.
+      READ TABLE t_review_role INTO DATA(lw_review) WITH KEY user_id = lw_zcap_review_hd-reviewer_id.
+      IF sy-subrc = 0.
+        lw_zcap_review_hd-reviewer_name = lw_review-name.
+      ENDIF. " IF sy-subrc = 0
+      IF <l_review_hd>-developer_id = l_id.
+        MESSAGE s999 WITH 'Developer can not be the Reviewer!' DISPLAY LIKE 'E'.
+        RETURN.
+      ENDIF. " IF <l_review_hd>-developer_id = l_id
+
+      lw_zcap_review_hd-status = '2'.
+      lw_zcap_review_hd-admin_id = sy-uname.
+
+      MODIFY zcap_review_hd FROM lw_zcap_review_hd.
+
+      p_w_zcap_review_hd = lw_zcap_review_hd.
+
+*---------------------------------------------------------------------------*
+*       TO SEND MAIL    ***************************
+*---------------------------------------------------------------------------*
+      lw_review_mail-role           = g_role_indc.
+      lw_review_mail-review_status  = lw_zcap_review_hd-status .
+      lw_review_mail-ecr_no         = lw_zcap_review_hd-ecr_no.
+      lw_review_mail-object_id      = w_inp_ba-objid.
+      lw_review_mail-counter        = lw_zcap_review_hd-counter.
+      lw_review_mail-eta            = lw_zcap_review_hd-eta.
+      lw_review_mail-dev_hours      = lw_zcap_review_hd-dev_effort.
+      lw_review_mail-developer_id   = lw_zcap_review_hd-developer_id.
+*       lw_review_mail-DEV_MAIL_ID    = lw_zcap_review_hd-.
+      lw_review_mail-reviewer_id    = lw_zcap_review_hd-reviewer_id.
+*       lw_review_mail-REV_MAIL_ID    = lw_zcap_review_hd-.
+      lw_review_mail-iteration_no   = 1.
+      PERFORM sub_send_mail USING lw_review_mail.
+
+      MESSAGE s999 WITH 'Review successfully submited to the next step'.
+      LEAVE TO SCREEN 0.
+
+    ENDIF. " IF sy-subrc = 0
+
+
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_PREP_REV_HD_APPROVE
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_W_ZCAP_REVIEW_HD  text
+*----------------------------------------------------------------------*
+  FORM sub_prep_rev_hd_approve  CHANGING p_w_zcap_review_hd TYPE zcap_review_hd    " Header table for review process tracking
+                                         pt_zcap_review_it TYPE ty_zcap_review_it. " Review points table
+
+    DATA: lw_zcap_review_hd TYPE zcap_review_hd, " Header table for review process tracking
+          l_error_flag      TYPE flag,           " General Flag
+          l_id              TYPE syst_uname,     " ABAP System Field: Name of Current User
+          l_name            TYPE char100,        " Name of type CHAR100
+          l_confirm_val     TYPE char1.          " Confirm_val of type CHAR1
+
+
+    lw_zcap_review_hd = w_review_hd_act.
+
+*   =========================================
+*   Changing Status accordingly
+*   =========================================
+*   1) Check if any open points there or not
+*   2) If there is some open points then status = IN PROGRESS
+*   3) If not then status = APPROVE
+    READ TABLE t_points_tab TRANSPORTING NO FIELDS
+                      WITH KEY status = '1 - Open'.
+    IF sy-subrc = 0.
+      lw_zcap_review_hd-status = '2'.
+
+      MESSAGE s999 WITH 'There are still some open points exists' DISPLAY LIKE 'E'.
+      RETURN.
+
+    ELSE. " ELSE -> IF sy-subrc = 0
+
+      CALL FUNCTION 'POPUP_TO_CONFIRM'
+        EXPORTING
+          titlebar              = 'Confirmation '
+          text_question         = 'Approval status - '
+          text_button_1         = 'Approve'
+          text_button_2         = 'Conditional'
+          default_button        = c_answer_2
+          display_cancel_button = abap_true
+        IMPORTING
+          answer                = l_confirm_val " to hold the FM's return value
+        EXCEPTIONS
+          text_not_found        = 1
+          OTHERS                = 2.
+      IF sy-subrc <> 0.
+        MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+        WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+      ENDIF. " IF sy-subrc <> 0
+
+      IF l_confirm_val IS NOT INITIAL.
+        CASE l_confirm_val.
+          WHEN c_answer_1.
+            lw_zcap_review_hd-status = '3'.
+          WHEN c_answer_2.
+            lw_zcap_review_hd-status = '4'.
+
+          WHEN OTHERS.
+            MESSAGE s999 WITH 'Action cancelled by user' DISPLAY LIKE 'E'.
+            RETURN.
+        ENDCASE.
+      ENDIF. " IF l_confirm_val IS NOT INITIAL
+
+    ENDIF. " IF sy-subrc = 0
+
+    IF lw_zcap_review_hd-status = '3'
+      OR lw_zcap_review_hd-status = '4'.
+
+      lw_zcap_review_hd-last_rev_date = sy-datum.
+ "++SHARMH2
+      PERFORM sub_review_rework_effrt CHANGING lw_zcap_review_hd.
+ "++SHARMH2
+      MODIFY zcap_review_hd FROM lw_zcap_review_hd.
+
+      PERFORM sub_prep_rev_it_data USING lw_zcap_review_hd
+                                   CHANGING l_error_flag
+                                            pt_zcap_review_it.
+ "++SHARMH2
+      IF pt_zcap_review_it IS NOT INITIAL.
+        MODIFY zcap_review_it FROM TABLE pt_zcap_review_it.
+      ENDIF. " IF pt_zcap_review_it IS NOT INITIAL
+ "++SHARMH2
+      p_w_zcap_review_hd = lw_zcap_review_hd.
+
+*---------------------------------------------------------------------------*
+*       TO SEND MAIL    ***************************
+*---------------------------------------------------------------------------*
+      lw_review_mail-role           = g_role_indc.
+      lw_review_mail-review_status  = lw_zcap_review_hd-status .
+      lw_review_mail-ecr_no         = lw_zcap_review_hd-ecr_no.
+      lw_review_mail-object_id      = w_inp_ba-objid.
+      lw_review_mail-counter        = lw_zcap_review_hd-counter.
+      lw_review_mail-eta            = lw_zcap_review_hd-eta.
+      lw_review_mail-dev_hours      = lw_zcap_review_hd-dev_effort.
+      lw_review_mail-developer_id   = lw_zcap_review_hd-developer_id.
+*       lw_review_mail-DEV_MAIL_ID    = lw_zcap_review_hd-.
+      lw_review_mail-reviewer_id    = lw_zcap_review_hd-reviewer_id.
+*       lw_review_mail-REV_MAIL_ID    = lw_zcap_review_hd-.
+      lw_review_mail-iteration_no   = 1.
+      PERFORM sub_send_mail USING lw_review_mail.
+
+      MESSAGE s999 WITH 'Review successfully approved!'.
+
+      LEAVE TO SCREEN 0.
+    ENDIF. " IF lw_zcap_review_hd-status = '3'
+
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_CHECK_INITIATION
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_check_initiation CHANGING p_initiate_f TYPE flag. " General Flag
+
+*   Check there is no active review session then popup to ask whether initiate a new one or not
+    IF w_review_hd_act-counter IS INITIAL.
+      p_initiate_f = abap_true.
+    ENDIF. " IF w_review_hd_act-counter IS INITIAL
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_BACK_TO_ADMIN
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_back_to_admin .
+
+    DATA(lw_zcap_review_hd) = w_review_hd_act.
+
+    CLEAR: lw_zcap_review_hd-reviewer_id,
+           lw_zcap_review_hd-reviewer_id.
+
+    lw_zcap_review_hd-status = '1'.
+
+    MODIFY zcap_review_hd FROM lw_zcap_review_hd.
+
+*---------------------------------------------------------------------------*
+*       TO SEND MAIL    ***************************
+*---------------------------------------------------------------------------*
+    lw_review_mail-role           = g_role_indc.
+    lw_review_mail-review_status  = lw_zcap_review_hd-status .
+    lw_review_mail-ecr_no         = lw_zcap_review_hd-ecr_no.
+    lw_review_mail-object_id      = w_inp_ba-objid.
+    lw_review_mail-counter        = lw_zcap_review_hd-counter.
+    lw_review_mail-eta            = lw_zcap_review_hd-eta.
+    lw_review_mail-dev_hours      = lw_zcap_review_hd-dev_effort.
+    lw_review_mail-developer_id   = lw_zcap_review_hd-developer_id.
+*       lw_review_mail-DEV_MAIL_ID    = lw_zcap_review_hd-.
+    lw_review_mail-reviewer_id    = lw_zcap_review_hd-reviewer_id.
+*       lw_review_mail-REV_MAIL_ID    = lw_zcap_review_hd-.
+    lw_review_mail-iteration_no   = 1.
+    PERFORM sub_send_mail USING lw_review_mail.
+
+    MESSAGE s999 WITH 'Review request assigned back to admin.'.
+    LEAVE TO SCREEN 0.
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_GEN_CODE_REV_XLS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_gen_code_rev_xls .
+
+    DATA:
+      l_langu                TYPE sylangu,                        " Language Key
+      l_xml_str_trans_result TYPE string,                         " XML in String
+      l_xstr                 TYPE xstring,                        " XML data converted to Xstring
+      l_file_name            TYPE string,                         " File Name
+      lt_binary_content      TYPE sdokcntbins,                    " SDOK: Table with Binary Document Content for Web Serve
+      lw_final_itm           TYPE REF TO zfmb0551_print_bs_item,  " Line type of p_t_final_itm
+      lw_header              TYPE zfmb0551_bs_hdr_excel,          " For Trasnformation Excel (Balance sheet Header text and val)
+      lw_item_header         TYPE zfmb0551_bs_item_txt_excel,     " For Trasnformation Excel (Balance sheet Item Heading Text)
+      lw_item                TYPE zfmb0551_bs_item_data_excel,    " For Trasnformation Excel (Balance sheet Item data )
+      lt_item                TYPE zfmb0551_bs_item_data_excel_tt, " Table type For Trasnformation Excel (Balance sheet Item data
+      lw_footer_info         TYPE zfmb0551_bs_footer_excel.       " For Trasnformation Excel (Balance sheet Footer text)
+
+    DATA:
+      lw_header_exl_txt   TYPE zcap_review_file_hd_text, " Header structure for excel file in reivew process(texts)
+      lw_header_exl_value TYPE zcap_review_file_hd_text, " Header structure for excel file in reivew process(texts)
+      lt_items_exl        TYPE zcap_review_file_item_exl_tt.
+
+    PERFORM sub_save_file_popup CHANGING l_file_name.
+
+    IF l_file_name IS INITIAL.
+      MESSAGE s999 WITH 'Action cancelled by user' DISPLAY LIKE 'E'.
+      RETURN.
+    ENDIF. " IF l_file_name IS INITIAL
+
+
+    PERFORM sub_populate_exl_struct CHANGING lw_header_exl_txt
+                                          lw_header_exl_value
+                                          lt_items_exl.
+
+* Call Transformtion to get string , which will be used to
+* excel formating and download
+    CALL TRANSFORMATION zcap_review_sheet
+    SOURCE  lw_header_txt  = lw_header_exl_txt
+            lw_header_value = lw_header_exl_value
+            lt_item_value  = lt_items_exl
+     RESULT XML l_xml_str_trans_result.
+
+
+
+* Convert String to Xstring format for excel download.
+    CALL FUNCTION 'SCMS_STRING_TO_XSTRING'
+      EXPORTING
+        text          = l_xml_str_trans_result
+      IMPORTING
+        buffer        = l_xstr
+      EXCEPTIONS
+        failed        = 1
+        error_message = 2
+        OTHERS        = 3.
+
+    IF sy-subrc IS NOT INITIAL OR
+     l_xstr IS INITIAL.
+
+*   Throw error.. No Futher Processing required
+      MESSAGE s640(zf) DISPLAY LIKE 'E'. " Error occurred during excel file download
+      LEAVE LIST-PROCESSING.
+
+    ELSE. " ELSE -> IF sy-subrc IS NOT INITIAL OR
+
+*   Convert Xtring to Binary format for excel download
+      CALL FUNCTION 'SCMS_XSTRING_TO_BINARY'
+        EXPORTING
+          buffer        = l_xstr            " XSTRING data
+        TABLES
+          binary_tab    = lt_binary_content " Binary data
+        EXCEPTIONS
+          error_message = 1
+          OTHERS        = 2.
+      IF sy-subrc IS NOT INITIAL OR
+         lt_binary_content IS INITIAL.
+
+*     Throw error.. No Futher Processing required
+        MESSAGE s640(zf) DISPLAY LIKE 'E'. " Error occurred during excel file download
+        RETURN.
+
+      ENDIF. " IF sy-subrc IS NOT INITIAL OR
+
+    ENDIF. " IF sy-subrc IS NOT INITIAL OR
+
+
+* Download an Internal Table to the PC
+    CALL METHOD cl_gui_frontend_services=>gui_download
+      EXPORTING
+        filename                = l_file_name       " File Name with Full path
+        filetype                = 'BIN'             " 'BIN'
+      CHANGING
+        data_tab                = lt_binary_content " Binary data
+      EXCEPTIONS
+        file_write_error        = 1
+        no_batch                = 2
+        gui_refuse_filetransfer = 3
+        invalid_type            = 4
+        no_authority            = 5
+        unknown_error           = 6
+        header_not_allowed      = 7
+        separator_not_allowed   = 8
+        filesize_not_allowed    = 9
+        header_too_long         = 10
+        dp_error_create         = 11
+        dp_error_send           = 12
+        dp_error_write          = 13
+        unknown_dp_error        = 14
+        access_denied           = 15
+        dp_out_of_memory        = 16
+        disk_full               = 17
+        dp_timeout              = 18
+        file_not_found          = 19
+        dataprovider_exception  = 20
+        control_flush_error     = 21
+        not_supported_by_gui    = 22
+        error_no_gui            = 23
+        OTHERS                  = 24.
+    IF sy-subrc IS INITIAL.
+
+*   Throw error.. No Futher Processing required
+      MESSAGE s641(zf). " Excel file successfully downloaded.
+
+    ELSE. " ELSE -> IF sy-subrc IS INITIAL
+
+*   Throw error.. No Futher Processing required
+      MESSAGE s640(zf) DISPLAY LIKE 'E'. " Error occurred during excel file download
+      RETURN.
+
+    ENDIF. " IF sy-subrc IS INITIAL
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_SAVE_FILE_POPUP
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_save_file_popup CHANGING p_file_name TYPE string.
+
+* Local data declaration:
+    DATA: l_title      TYPE string, " Title for dialog window
+          l_filefilter TYPE string, " Filters to excel files only
+          l_fileaction TYPE i,      " User Action
+          l_file       TYPE string, " for file name
+          l_path       TYPE string, " path name
+          l_fpath      TYPE string. " full path
+
+* Clear variables.
+    CLEAR: l_file,
+           l_path,
+           l_fpath,
+           l_fileaction.
+
+* Use method 'FILE_SAVE_DIALOG' of class 'CL_GUI_FRONTEND_SERVICES'
+* to display the file selection dialog box.
+    CLASS cl_gui_frontend_services DEFINITION LOAD. " Frontend Services
+
+* Store title text of dialog window.
+    l_title = 'Select File'.
+
+* Excel only
+*    l_filefilter = cl_gui_frontend_services=>filetype_all.
+    l_filefilter = 'Excel 97-2003 Workbook (*.xls)|*.xls|'.
+
+
+* Display file save dialog.
+    CALL METHOD cl_gui_frontend_services=>file_save_dialog
+      EXPORTING
+        window_title         = l_title      " Window title
+        default_extension    = 'xls'        " '.XLS'
+        file_filter          = l_filefilter " Only excel file disp
+        prompt_on_overwrite  = space
+      CHANGING
+        filename             = l_file       " File Name
+        path                 = l_path       " File Path
+        fullpath             = l_fpath      " Full Path
+        user_action          = l_fileaction " User action in popuop
+      EXCEPTIONS
+        cntl_error           = 1
+        error_no_gui         = 2
+        not_supported_by_gui = 3
+        OTHERS               = 4.
+
+* If the dialog opened successfully then,
+    IF sy-subrc IS INITIAL.
+*   Display the selected file name in
+*   file name parameter on the screen.
+      p_file_name  = l_fpath.
+
+    ENDIF. " IF sy-subrc IS INITIAL
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_VALIDATE_ETA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_ETA  text
+*----------------------------------------------------------------------*
+  FORM sub_validate_eta  USING    p_eta TYPE datum. " Date
+
+    IF g_initiate_f IS NOT INITIAL.
+      IF p_eta IS INITIAL.
+        MESSAGE e999 WITH 'Please enter ETA date.'.
+      ENDIF. " IF p_eta IS INITIAL
+    ENDIF. " IF g_initiate_f IS NOT INITIAL
+
+    IF p_eta IS NOT INITIAL
+      AND p_eta LT sy-datum.
+
+      MESSAGE e999 WITH 'ETA must not be past date.'.
+    ENDIF. " IF p_eta IS NOT INITIAL
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_INITIATE_REVIEW
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_initiate_review .
+
+    DATA: lw_zcap_review_hd TYPE zcap_review_hd,           " Header table for review process tracking
+          lw_review_mail    TYPE zcap_review_mail_details. " Structure required to send mail
+
+    IF p_wbs IS NOT INITIAL
+      AND p_eta IS NOT INITIAL
+      AND p_dev_hr IS NOT INITIAL.
+
+      IF p_eta IS NOT INITIAL
+        AND p_eta LT sy-datum.
+
+        MESSAGE s999 WITH 'ETA must not be past date.' DISPLAY LIKE 'E'.
+        LEAVE LIST-PROCESSING.
+      ENDIF. " IF p_eta IS NOT INITIAL
+
+      PERFORM sub_prep_rev_hd_data CHANGING lw_zcap_review_hd.
+      CLEAR: g_initiate_f.
+
+      IF lw_zcap_review_hd-status = '1'.
+*---------------------------------------------------------------------------*
+*       TO SEND MAIL    ***************************
+*---------------------------------------------------------------------------*
+        lw_review_mail-role           = g_role_indc.
+        lw_review_mail-review_status  = lw_zcap_review_hd-status .
+        lw_review_mail-ecr_no         = lw_zcap_review_hd-ecr_no.
+        lw_review_mail-object_id      = w_inp_ba-objid.
+        lw_review_mail-counter        = lw_zcap_review_hd-counter.
+        lw_review_mail-eta            = lw_zcap_review_hd-eta.
+        lw_review_mail-dev_hours      = lw_zcap_review_hd-dev_effort.
+        lw_review_mail-developer_id   = lw_zcap_review_hd-developer_id.
+*       lw_review_mail-DEV_MAIL_ID    = lw_zcap_review_hd-.
+        lw_review_mail-reviewer_id    = lw_zcap_review_hd-reviewer_id.
+*       lw_review_mail-REV_MAIL_ID    = lw_zcap_review_hd-.
+        lw_review_mail-iteration_no   = 1.
+        PERFORM sub_send_mail USING lw_review_mail.
+
+        MESSAGE s999 WITH 'Review is successfully initiated!'.
+        LEAVE TO SCREEN 0.
+
+      ENDIF. " IF lw_zcap_review_hd-status = '1'
+
+    ELSE. " ELSE -> IF lw_zcap_review_hd-status = '1'
+
+*     Validating required data to initiate the review process
+      IF p_wbs IS INITIAL.
+        MESSAGE s999 WITH 'Please enter WBS details.' DISPLAY LIKE 'E'.
+      ELSEIF p_dev_hr IS INITIAL.
+        MESSAGE s999 WITH 'Please enter development hours.' DISPLAY LIKE 'E'.
+      ELSEIF p_eta IS INITIAL.
+        MESSAGE s999 WITH 'Please enter ETA date.' DISPLAY LIKE 'E'.
+      ENDIF. " IF p_wbs IS INITIAL
+
+      LEAVE LIST-PROCESSING.
+
+    ENDIF. " IF p_wbs IS NOT INITIAL
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_VALIDATE_WBS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_WBS  text
+*----------------------------------------------------------------------*
+  FORM sub_validate_wbs  USING    p_wbs TYPE char30. " Validate_wbs using p_ of type CHAR30
+
+    IF g_initiate_f IS NOT INITIAL.
+      IF p_wbs IS INITIAL.
+        MESSAGE e999 WITH 'Please enter WBS details.'.
+      ENDIF. " IF p_wbs IS INITIAL
+    ENDIF. " IF g_initiate_f IS NOT INITIAL
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_VALIDATE_DEV_HR
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_DEV_HR  text
+*----------------------------------------------------------------------*
+  FORM sub_validate_dev_hr  USING    p_dev_hr TYPE z_hle_ba. " High Level Estimate Effort (hours) (BA)
+
+    IF g_initiate_f IS NOT INITIAL.
+      IF p_dev_hr IS INITIAL.
+        MESSAGE e999 WITH 'Please enter development hours.'.
+      ENDIF. " IF p_dev_hr IS INITIAL
+    ENDIF. " IF g_initiate_f IS NOT INITIAL
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_VALIDATE_ECR_NO
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_ECR  text
+*----------------------------------------------------------------------*
+  FORM sub_validate_ecr_no  USING    p_ecr TYPE z_ecrno. " ECR Number (GPS)
+
+    CLEAR: w_review_hd_act,
+            t_review_hd,
+            t_inp_ba         ,
+             w_inp_ba         .
+*** Begin ADD:ALIY2:10-Aug-2021
+    IF p_ecr IS INITIAL.
+      MESSAGE e999 WITH 'Please enter ECR Number'.
+    ENDIF. " IF p_ecr IS INITIAL
+*** End ADD:ALIY2:10-Aug-2021
+
+*++START OF CHANGE BY BARDHS2 DATE: 17/05/2023
+*    IF sy-uname = 'BARDHS2' OR
+*       sy-uname = 'MAZUMS4' OR
+*       sy-uname = 'CHATTS4' OR
+*       sy-uname = 'DASC2'
+*       OR sy-uname = 'CHATUD2'.
+
+* Select data from table ECR Tracking - Functional Information
+      SELECT  project,        " Project
+              prj_ref,        " Project Reference (ECR_Seq.No)
+              sub_prj,        " Sub Project
+              prj_name,       " Project Name
+              objid,          " RICEF / Development Object Id
+              otype,          " Object Type
+              ecrno,          " ECR Number (GPS)
+              ecr_descr,      " ECR Description
+              impl_dt,        " Implementation Date
+              proc_team,      " Process Team
+              locid,          " Location / Cluster
+              func_id,        " Owner / Name (Business Analist）
+              complexity,     " Object Complexity
+              new_obj,        " New Object (Y/N) ?
+              zpackage,       " Development Package
+              pln_fs_dlvdt,   " Planned FS Delivery Date
+              week_nr,        " Planned FS Delivery Week Number
+              act_fs_dlvdt,   " Actual FS Delivery date
+              devloc,         " Development Location
+              pln_whodt,      " WHO FS Done (Y/N) ?
+              act_whodt,      " Actual WHO Date
+              hle_ba,         " High Level Estimate Effort (hours) (BA)
+              hle_dev,        " High Level Estimate Effort (hours) (Development)
+              dee_ba,         " Detailed Estimate Effort (hours)
+              bi_impct,       " BI Impact (Y/N)
+              pln_futdt,      " Planned FUT Completion Date
+              act_futdt,      " Actual FUT Completion Date
+              fut_stat,       " FUT Status
+              pln_uatdt,      " Planned UAT Completion Date
+              act_uatdt,      " Actual UAT Completion Date
+              uat_stat,       " UAT Status
+              tcode,          " Transaction Code
+              auth_reqd,      " Authorization Required (Y/N)
+              note,           " Note
+              addnl_note,     " Additional Note
+              usnam,          " User name
+              cpudt,          " Day On Which Document Was Entered
+              usupd,          " Changed By
+              udat            " Changed On
+            FROM  zcap_ecr_fo " ECR Tracking - Functional Information
+            INTO TABLE @DATA(lt_inp_ba)
+            WHERE ecrno = @p_ecr_no.
+
+      IF lt_inp_ba IS NOT INITIAL.
+        DESCRIBE TABLE lt_inp_ba LINES DATA(lv_lines).
+
+        IF lv_lines EQ 1.
+          CLEAR: w_inp_ba.
+          READ TABLE lt_inp_ba INTO w_inp_ba
+          WITH KEY ecrno = p_ecr_no.
+          IF sy-subrc = 0.
+            p_obj_id = w_inp_ba-objid.
+          ENDIF. " IF sy-subrc = 0
+        ELSEIF lv_lines GT 1.
+**         Clear object id field if prev value is retained
+*          READ TABLE lt_inp_ba INTO w_inp_ba
+*          WITH KEY ecrno = p_ecr_no
+*                   objid = p_obj_id.
+*          IF sy-subrc NE 0.
+*            CLEAR p_obj_id.
+*          ENDIF. " IF sy-subrc NE 0
+          IF p_obj_id IS INITIAL.
+*RAISE INFORMATION POPUP
+            MESSAGE 'This ECR No has Multiple Object IDs. Enter atleast one Object ID to proceed.'(002) TYPE 'E'.
+          ELSE. " ELSE -> IF p_obj_id IS INITIAL
+            CLEAR: w_inp_ba.
+            READ TABLE lt_inp_ba INTO w_inp_ba
+            WITH KEY objid = p_obj_id
+                     ecrno = p_ecr_no.
+            IF sy-subrc NE 0.
+              MESSAGE 'Invalid combination of ECR No and Object ID.'(003) TYPE 'E'.
+            ENDIF. " IF sy-subrc NE 0
+          ENDIF. " IF p_obj_id IS INITIAL
+        ENDIF. " IF lv_lines EQ 1
+      ENDIF. " IF lt_inp_ba IS NOT INITIAL
+*    ELSE. " ELSE -> IF sy-subrc NE 0
+**++END OF CHANGE BY BARDHS2 DATE: 17/05/2023
+*  Begin DEL:BARDHS2:Review Tool update
+** Select data from table ECR Tracking - Functional Information
+*      SELECT  project         " Project
+*              prj_ref         " Project Reference (ECR_Seq.No)
+*              sub_prj         " Sub Project
+*              prj_name        " Project Name
+*              objid           " RICEF / Development Object Id
+*              otype           " Object Type
+*              ecrno           " ECR Number (GPS)
+*              ecr_descr       " ECR Description
+*              impl_dt         " Implementation Date
+*              proc_team       " Process Team
+*              locid           " Location / Cluster
+*              func_id         " Owner / Name (Business Analist）
+*              complexity      " Object Complexity
+*              new_obj         " New Object (Y/N) ?
+*              zpackage        " Development Package
+*              pln_fs_dlvdt    " Planned FS Delivery Date
+*              week_nr         " Planned FS Delivery Week Number
+*              act_fs_dlvdt    " Actual FS Delivery date
+*              devloc          " Development Location
+*              pln_whodt       " WHO FS Done (Y/N) ?
+*              act_whodt       " Actual WHO Date
+*              hle_ba          " High Level Estimate Effort (hours) (BA)
+*              hle_dev         " High Level Estimate Effort (hours) (Development)
+*              dee_ba          " Detailed Estimate Effort (hours)
+*              bi_impct        " BI Impact (Y/N)
+*              pln_futdt       " Planned FUT Completion Date
+*              act_futdt       " Actual FUT Completion Date
+*              fut_stat        " FUT Status
+*              pln_uatdt       " Planned UAT Completion Date
+*              act_uatdt       " Actual UAT Completion Date
+*              uat_stat        " UAT Status
+*              tcode           " Transaction Code
+*              auth_reqd       " Authorization Required (Y/N)
+*              note            " Note
+*              addnl_note      " Additional Note
+*              usnam           " User name
+*              cpudt           " Day On Which Document Was Entered
+*              usupd           " Changed By
+*              udat            " Changed On
+*            FROM  zcap_ecr_fo " ECR Tracking - Functional Information
+*            UP TO 1 ROWS
+*            INTO w_inp_ba
+*            WHERE ecrno = p_ecr_no.
+*
+*      ENDSELECT.
+*  End DEL:BARDHS2:Review Tool update
+**++START OF CHANGE BY BARDHS2 DATE: 17/05/2023
+*    ENDIF. " IF sy-uname = 'BARDHS2' OR
+*++END OF CHANGE BY BARDHS2 DATE: 17/05/2023
+*   Select data from Incident  Tracking table if not an ECR
+    IF sy-subrc <> 0.
+      SELECT  inc_number         " ECR Number (GPS)
+              inc_task           " Project Reference (ECR_Seq.No)
+              object_id          " Object ID
+              project            " Project
+              wbs                " Wbs Character field of length 40
+              developer          " User Name
+              architect          " User Name
+              solman_pkg         " Solman Pkg Char 20
+              effort             " High Level Estimate Effort (hours) (Development)
+              create_date        " Date on Which Record Was Created
+              created_by         " Name of Person who Created the Object
+              change_date        " Changed On
+              changed_by         " Name of Person Who Changed Object
+            FROM zcap_inc_review " Incident review process tracking
+            UP TO 1 ROWS
+            INTO w_inc_review
+            WHERE inc_number = p_ecr_no.
+
+      ENDSELECT.
+
+      IF sy-subrc = 0.
+        w_inp_ba-project = w_inc_review-project.
+        w_inp_ba-prj_ref = w_inc_review-inc_task.
+        w_inp_ba-objid = w_inc_review-object_id.
+        w_inp_ba-ecrno = w_inc_review-inc_number.
+        w_inp_ba-zpackage = w_inc_review-solman_pkg.
+        w_inp_ba-hle_dev = w_inc_review-effort.
+        w_inp_ba-usnam = w_inc_review-changed_by.
+      ENDIF. " IF sy-subrc = 0
+    ENDIF. " IF sy-subrc <> 0
+
+    IF sy-subrc = 0.
+
+      GET PARAMETER ID 'ZPARA_ECR_COUNT' FIELD DATA(l_count).
+      IF l_count IS NOT INITIAL.
+        p_count = l_count.
+      ENDIF. " IF l_count IS NOT INITIAL
+
+      IF p_count IS NOT INITIAL.
+        SELECT *
+          FROM zcap_review_hd " Header table for review process tracking
+          INTO TABLE t_review_hd
+          WHERE project = w_inp_ba-project
+            AND prj_ref = w_inp_ba-prj_ref
+            AND counter = p_count.
+      ELSE. " ELSE -> IF p_count IS NOT INITIAL
+        SELECT *
+          FROM zcap_review_hd " Header table for review process tracking
+          INTO TABLE t_review_hd
+          WHERE project = w_inp_ba-project
+            AND prj_ref = w_inp_ba-prj_ref.
+      ENDIF. " IF p_count IS NOT INITIAL
+
+      IF sy-subrc = 0.
+
+        SORT t_review_hd BY counter DESCENDING.
+
+*       If the parameter p_count is not initial then this request is coming for display
+        IF p_count IS NOT INITIAL.
+
+          READ TABLE t_review_hd INTO w_review_hd_act INDEX 1.
+          IF sy-subrc = 0.
+            RETURN.
+          ENDIF. " IF sy-subrc = 0
+        ENDIF. " IF p_count IS NOT INITIAL
+
+*       If the records are found then we have to check whether there is any active entry for review found
+*       If found then we have to show the details only of that record only
+*       This will contain small number of records so BINARY search is not required
+        LOOP AT t_review_hd INTO w_review_hd_act.
+
+          IF w_review_hd_act-status = '1'    " Initiated
+            OR w_review_hd_act-status = '2'. " In-Progress
+
+            EXIT.
+          ELSE. " ELSE -> IF sy-subrc = 0
+
+            CLEAR w_review_hd_act.
+
+          ENDIF. " LOOP AT t_review_hd INTO w_review_hd_act
+        ENDLOOP. " IF sy-subrc = 0
+*        Added for Review Checklist generation
+        DATA : l_answer TYPE char1. " Answer of type CHAR1
+        DATA : l_rev_count TYPE sytabix. " Row Index of Internal Tables
+        DATA : l_question TYPE text30. " Text (30 Characters)
+        l_rev_count = lines( t_review_hd[] ).
+        IF w_review_hd_act IS INITIAL AND l_rev_count > 0.
+          IF l_rev_count = 1.
+            l_question = 'Open existing Review?'.
+          ELSE. " ELSE -> IF l_rev_count = 1
+            l_question = 'Open existing Reviews?'.
+          ENDIF. " IF l_rev_count = 1
+          CALL FUNCTION 'POPUP_TO_CONFIRM'
+            EXPORTING
+*             TITLEBAR              = ' '
+*             DIAGNOSE_OBJECT       = ' '
+              text_question         = l_question
+              text_button_1         = 'Yes'
+              text_button_2         = 'No'
+*             ICON_BUTTON_2         = ' '
+*             DEFAULT_BUTTON        = '1'
+              display_cancel_button = 'X'
+*             USERDEFINED_F1_HELP   = ' '
+              start_column          = 25
+              start_row             = 6
+*             POPUP_TYPE            =
+*             IV_QUICKINFO_BUTTON_1 = ' '
+*             IV_QUICKINFO_BUTTON_2 = ' '
+            IMPORTING
+              answer                = l_answer
+*           TABLES
+*             PARAMETER             =
+            EXCEPTIONS
+              text_not_found        = 1
+              OTHERS                = 2.
+          IF sy-subrc = 0 AND l_answer = '1'.
+            IF l_rev_count = 1.
+              READ TABLE t_review_hd INTO w_review_hd_act INDEX 1.
+            ELSE. " ELSE -> IF l_rev_count = 1
+              PERFORM sub_chk_avialable_reviews.
+            ENDIF. " IF l_rev_count = 1
+          ENDIF. " IF sy-subrc = 0 AND l_answer = '1'
+
+        ENDIF. " IF w_review_hd_act IS INITIAL AND l_rev_count > 0
+
+      ENDIF. " IF sy-subrc = 0
+
+    ELSE. " ELSE -> IF sy-subrc = 0 AND l_answer = '1'
+
+      MESSAGE e999 WITH 'ECR/Incident does not exists!'. " 'ECR does not exists!'.
+
+    ENDIF.
+  ENDFORM.
+  FORM sub_chk_avialable_reviews.
+    DATA : lt_review_hd TYPE STANDARD TABLE OF zcap_review_hd, " Header table for review process tracking
+           ls_sel_field TYPE slis_selfield,
+           lt_fcat      TYPE slis_t_fieldcat_alv,
+           ls_fcat      TYPE slis_fieldcat_alv.
+
+*  If LT_REVIEW_HD is initial then no need to check fpor presence of multiple review Entry
+    IF t_review_hd[] IS NOT INITIAL.
+      IF lines( t_review_hd ) > 1.
+        lt_review_hd[] = t_review_hd[].
+*      More then one entry -  ask user to confirm
+        SORT lt_review_hd BY last_rev_date DESCENDING.
+
+        CLEAR ls_fcat.
+        ls_fcat-fieldname = 'PROJECT'. "Field Name
+        ls_fcat-tabname   = 'LT_REVIEW_HD'. "Table Name
+        ls_fcat-seltext_l = 'Project'. "Selection text
+        APPEND ls_fcat TO lt_fcat.
+
+        CLEAR ls_fcat.
+        ls_fcat-fieldname = 'PRJ_REF'. "Field Name
+        ls_fcat-tabname   = 'LT_REVIEW_HD'. "Table Name
+        ls_fcat-seltext_l = 'Project ref'. "Selection text
+        APPEND ls_fcat TO lt_fcat.
+
+        CLEAR ls_fcat.
+        ls_fcat-fieldname = 'COUNTER'. "Field Name
+        ls_fcat-tabname   = 'LT_REVIEW_HD'. "Table Name
+        ls_fcat-seltext_l = 'COUNT'. "Selection text
+        APPEND ls_fcat TO lt_fcat.
+
+
+        CLEAR ls_fcat.
+        ls_fcat-fieldname = 'ECR_NO'. "Field Name
+        ls_fcat-tabname   = 'LT_REVIEW_HD'. "Table Name
+        ls_fcat-seltext_l = 'ECR/INC'. "Selection text
+        APPEND ls_fcat TO lt_fcat.
+
+        CLEAR ls_fcat.
+        ls_fcat-fieldname = 'LAST_REV_DATE'. "Field Name
+        ls_fcat-tabname   = 'LT_REVIEW_HD'. "Table Name
+        ls_fcat-seltext_l = 'Last Review Date'. "Selection text
+        APPEND ls_fcat TO lt_fcat.
+
+        CALL FUNCTION 'REUSE_ALV_POPUP_TO_SELECT'
+          EXPORTING
+            i_title               = 'Select a Review Entry'
+            i_selection           = 'X'
+            i_zebra               = 'X'
+            i_screen_start_column = 15
+            i_screen_start_line   = 10
+            i_screen_end_column   = 83
+            i_screen_end_line     = 20
+            i_tabname             = 'LT_REVIEW_HD'
+            it_fieldcat           = lt_fcat
+*           IT_EXCLUDING          =
+*           I_CALLBACK_PROGRAM    =
+*           I_CALLBACK_USER_COMMAND       =
+*           IS_PRIVATE            =
+          IMPORTING
+            es_selfield           = ls_sel_field
+*           E_EXIT                =
+          TABLES
+            t_outtab              = lt_review_hd
+          EXCEPTIONS
+            program_error         = 1
+            OTHERS                = 2.
+        IF sy-subrc = 0.
+          READ TABLE lt_review_hd INTO w_review_hd_act INDEX ls_sel_field-tabindex.
+          IF sy-subrc NE 0.
+            CLEAR w_review_hd_act.
+          ENDIF. " IF sy-subrc NE 0
+        ENDIF. " IF sy-subrc = 0
+      ENDIF. " IF lines( t_review_hd ) > 1
+    ENDIF. " IF t_review_hd[] IS NOT INITIAL
+
+    IF w_review_hd_act IS INITIAL.
+      MESSAGE 'No Review entry found for the criteria' TYPE 'E'.
+    ENDIF. " IF w_review_hd_act IS INITIAL
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_PREP_DRPDWN_TABS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_prep_drpdwn_tabs .
+
+    DATA: lt_tabb TYPE STANDARD TABLE OF dd07v. " Generated Table for View
+
+*----------------------------------------------------------------------*
+*  Prepare dropdown for Defect Category
+*----------------------------------------------------------------------*
+    CALL FUNCTION 'DD_DOMA_GET'
+      EXPORTING
+        domain_name   = 'Z_MDT_DEFECT_CATEGORY'
+        langu         = sy-langu
+        withtext      = abap_true
+      TABLES
+        dd07v_tab_a   = t_taba_def_catg
+        dd07v_tab_n   = lt_tabb
+      EXCEPTIONS
+        illegal_value = 1
+        op_failure    = 2
+        OTHERS        = 3.
+
+*----------------------------------------------------------------------*
+*  Prepare dropdown for Priority
+*----------------------------------------------------------------------*
+    CALL FUNCTION 'DD_DOMA_GET'
+      EXPORTING
+        domain_name   = 'Z_MDT_PRIORITY'
+        langu         = sy-langu
+        withtext      = abap_true
+      TABLES
+        dd07v_tab_a   = t_taba_prio
+        dd07v_tab_n   = lt_tabb
+      EXCEPTIONS
+        illegal_value = 1
+        op_failure    = 2
+        OTHERS        = 3.
+
+*----------------------------------------------------------------------*
+*  Prepare dropdown for Priority
+*----------------------------------------------------------------------*
+    CALL FUNCTION 'DD_DOMA_GET'
+      EXPORTING
+        domain_name   = 'Z_MDT_DEFECT_STATUS'
+        langu         = sy-langu
+        withtext      = abap_true
+      TABLES
+        dd07v_tab_a   = t_taba_def_stat
+        dd07v_tab_n   = lt_tabb
+      EXCEPTIONS
+        illegal_value = 1
+        op_failure    = 2
+        OTHERS        = 3.
+
+*----------------------------------------------------------------------*
+*  Prepare dropdown for Review Status
+*----------------------------------------------------------------------*
+    CALL FUNCTION 'DD_DOMA_GET'
+      EXPORTING
+        domain_name   = 'Z_REVIEW_STAT'
+        langu         = sy-langu
+        withtext      = abap_true
+      TABLES
+        dd07v_tab_a   = t_taba_rev_stat
+        dd07v_tab_n   = lt_tabb
+      EXCEPTIONS
+        illegal_value = 1
+        op_failure    = 2
+        OTHERS        = 3.
+
+*Prepare Drop down for Defect Sub category
+    SELECT *
+    FROM zcap_def_subcat " Defect Sub Category Table
+    INTO TABLE t_defect_subcat.
+    IF sy-subrc = 0.
+      SORT t_defect_subcat BY defect_subcat.
+    ENDIF. " IF sy-subrc = 0
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_SEND_MAIL
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LW_REVIEW_MAIL_DETAILS  text
+*----------------------------------------------------------------------*
+  FORM sub_send_mail  USING    p_w_review_mail_details TYPE zcap_review_mail_details. " Structure required to send mail
+
+    CALL FUNCTION 'ZCAP_REVIEW_MAIL_SEND'
+      EXPORTING
+        i_review_detail = p_w_review_mail_details.
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_REFRESH_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_refresh_data .
+
+    SET PARAMETER ID : 'ZPARA_ECR_COUNT' FIELD space.
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_LOCK_UNLOCK
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_T_REVIEW_LOCK_DATA  text
+*----------------------------------------------------------------------*
+  FORM sub_lock_unlock  USING p_lock_flag TYPE flag " General Flag
+  p_w_review_hd_act TYPE zcap_review_hd             " Header table for review process tracking
+  CHANGING p_t_review_lock_data TYPE ty_t_review_lock.
+
+
+    IF p_lock_flag IS NOT INITIAL.
+
+      CALL FUNCTION 'ENQUEUE_EZ_CAP_REVIEW_HD'
+        EXPORTING
+          mode_zcap_review_hd = 'E'
+          mandt               = sy-mandt
+          project             = p_w_review_hd_act-project
+          prj_ref             = p_w_review_hd_act-prj_ref
+          counter             = p_w_review_hd_act-counter
+          x_project           = ' '
+          x_prj_ref           = ' '
+          x_counter           = ' '
+          _scope              = '2'
+          _wait               = ' '
+          _collect            = ' '
+        EXCEPTIONS
+          foreign_lock        = 1
+          system_failure      = 2
+          OTHERS              = 3.
+      IF sy-subrc = 0.
+*     Implement suitable error handling here
+        APPEND INITIAL LINE TO p_t_review_lock_data ASSIGNING FIELD-SYMBOL(<l_review_lock>).
+
+        <l_review_lock>-project = p_w_review_hd_act-project.
+        <l_review_lock>-prj_ref = p_w_review_hd_act-prj_ref.
+        <l_review_lock>-counter = p_w_review_hd_act-counter.
+        <l_review_lock>-lock = abap_true.
+
+      ELSE. " ELSE -> IF sy-subrc = 0
+        MESSAGE ID sy-msgid TYPE c_msgtyp_s NUMBER sy-msgno
+        WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4 DISPLAY LIKE c_msgtyp_e.
+
+        g_role_indc = c_role_o.
+      ENDIF. " IF sy-subrc = 0
+
+    ELSE. " ELSE -> IF p_lock_flag IS NOT INITIAL
+
+      LOOP AT p_t_review_lock_data ASSIGNING <l_review_lock>
+      WHERE project = p_w_review_hd_act-project
+      AND prj_ref = p_w_review_hd_act-prj_ref
+      AND counter = p_w_review_hd_act-counter
+      AND lock = abap_true.
+
+        CALL FUNCTION 'DEQUEUE_EZ_CAP_REVIEW_HD'
+          EXPORTING
+            mode_zcap_review_hd = 'E'
+            mandt               = sy-mandt
+            project             = p_w_review_hd_act-project
+            prj_ref             = p_w_review_hd_act-prj_ref
+            counter             = p_w_review_hd_act-counter
+            x_project           = ' '
+            x_prj_ref           = ' '
+            x_counter           = ' '
+            _scope              = '3'
+            _synchron           = ' '
+            _collect            = ' '.
+
+        <l_review_lock>-lock = abap_false.
+
+      ENDLOOP. " LOOP AT p_t_review_lock_data ASSIGNING <l_review_lock>
+    ENDIF. " IF p_lock_flag IS NOT INITIAL
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_POPULATE_EXL_STRUCT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_W_HEADER_TXT  text
+*      <--P_W_HEADER_VALUE  text
+*      <--P_T_ITEMS  text
+*----------------------------------------------------------------------*
+  FORM sub_populate_exl_struct  CHANGING p_w_header_txt   TYPE zcap_review_file_hd_text " Header structure for excel file in reivew process(texts)
+  p_w_header_value TYPE zcap_review_file_hd_text                                        " Header structure for excel file in reivew process(texts)
+  p_t_items       TYPE zcap_review_file_item_exl_tt.
+
+
+    p_w_header_txt-heading = 'Code review'.
+    p_w_header_txt-project = 'Project'.
+    p_w_header_txt-developer = 'Developer'.
+    p_w_header_txt-xdd              = 'IDD/EDD/RDD/LDD'.
+    p_w_header_txt-crd_sr           = 'CRD/SR/TPR/ECR'.
+    p_w_header_txt-primary_object   = 'Primary object(s)'.
+    p_w_header_txt-cts              = 'CTS'.
+    p_w_header_txt-new              = 'New / Existing'.
+    p_w_header_txt-hours_of_effort  = 'Hours of effort'.
+    p_w_header_txt-wbs              = 'WBS'.
+    p_w_header_txt-tcode            = 'Tcode'.
+    p_w_header_txt-dev_package      = 'Development Package'.
+    p_w_header_txt-reviewer         = 'Reviewer'.
+    p_w_header_txt-last_review_dt   = 'Last review dt'.
+    p_w_header_txt-review_status     = 'Review status'.
+    p_w_header_txt-final_comments   = 'Final comments'.
+    p_w_header_txt-it_issue_no      = 'Issue#'.
+    p_w_header_txt-it_object_name   = 'Object Name'.
+    p_w_header_txt-it_obj_type      = 'Obj Type'. " W_header_txt-it_obj_ of type
+    p_w_header_txt-it_subroutine    = 'Subroutine'.
+    p_w_header_txt-it_line         = 'Line#'.
+    p_w_header_txt-it_issue         = 'Issue'.
+    p_w_header_txt-it_defect_cat    = 'Defect Category'.
+    p_w_header_txt-it_description   = 'Description'.
+    p_w_header_txt-it_priority      = 'Priority'.
+    p_w_header_txt-it_last_review_dt = 'Last review dt'.
+    p_w_header_txt-it_reviewer_comm = 'Reviewer Comments'.
+    p_w_header_txt-it_developer_comm = 'Developer Comments'.
+    p_w_header_txt-it_status        = 'Status'.
+
+**********************************************************************
+** Excel header values
+**********************************************************************
+    READ TABLE t_review_role ASSIGNING FIELD-SYMBOL(<l_review_role>)
+    WITH KEY user_id = w_review_hd_act-developer_id
+    BINARY SEARCH.
+    IF sy-subrc = 0.
+      p_w_header_value-developer = <l_review_role>-name.
+    ENDIF. " IF sy-subrc = 0
+
+    p_w_header_value-project         = w_inp_ba-project && '(' && w_inp_ba-prj_ref && ')'.
+    p_w_header_value-xdd             = w_inp_ba-objid.
+    p_w_header_value-crd_sr          = 'ECR' && w_review_hd_act-ecr_no.
+    p_w_header_value-primary_object  = g_text_obj_list.
+    p_w_header_value-cts             = g_text_cts_list.
+    p_w_header_value-new             = w_inp_ba-new_obj.
+    p_w_header_value-hours_of_effort = w_review_hd_act-dev_effort.
+    p_w_header_value-wbs             = w_review_hd_act-wbs.
+*    p_w_header_value-tcode           = .
+*    p_w_header_value-dev_package     = .
+    READ TABLE t_review_role ASSIGNING <l_review_role>
+    WITH KEY user_id = w_review_hd_act-reviewer_id
+    BINARY SEARCH.
+    IF sy-subrc = 0.
+      p_w_header_value-reviewer = <l_review_role>-name.
+    ENDIF. " IF sy-subrc = 0
+
+    PERFORM sub_date_formatted USING w_review_hd_act-last_rev_date
+    CHANGING p_w_header_value-last_review_dt.
+
+
+    READ TABLE t_taba_rev_stat ASSIGNING FIELD-SYMBOL(<l_taba>)
+    WITH KEY domvalue_l = w_review_hd_act-status.
+    IF sy-subrc = 0.
+      p_w_header_value-review_status    = <l_taba>-ddtext.
+    ENDIF. " IF sy-subrc = 0
+*    p_w_header_txt-final_comments  = .
+
+    LOOP AT t_review_it_act ASSIGNING FIELD-SYMBOL(<l_review_it>).
+
+      APPEND INITIAL LINE TO p_t_items ASSIGNING FIELD-SYMBOL(<l_item>).
+
+      <l_item>-it_issue_no       = <l_review_it>-point_counter.
+      <l_item>-it_object_name    = <l_review_it>-obj_name.
+      <l_item>-it_obj_type       = <l_review_it>-obj_type.
+      <l_item>-it_subroutine     = <l_review_it>-subroutine.
+      <l_item>-it_line           = <l_review_it>-line_no.
+      <l_item>-it_issue          = <l_review_it>-issue_desc.
+      <l_item>-it_defect_cat     = <l_review_it>-defect_cat.
+      READ TABLE t_taba_def_catg ASSIGNING <l_taba>
+      WITH KEY domvalue_l = <l_review_it>-defect_cat.
+      IF sy-subrc = 0.
+        <l_item>-it_defect_cat_desc  = <l_taba>-ddtext.
+      ENDIF. " IF sy-subrc = 0
+
+      READ TABLE t_taba_prio ASSIGNING <l_taba>
+      WITH KEY domvalue_l = <l_review_it>-priority.
+      IF sy-subrc = 0.
+        <l_item>-it_priority       = <l_taba>-ddtext.
+      ENDIF. " IF sy-subrc = 0
+
+      PERFORM sub_date_formatted USING <l_review_it>-last_rev_date
+      CHANGING <l_item>-it_last_review_dt.
+
+      <l_item>-it_reviewer_comm  = <l_review_it>-reviewer_comm.
+      <l_item>-it_developer_comm = <l_review_it>-developer_comm.
+      READ TABLE t_taba_def_stat ASSIGNING <l_taba>
+      WITH KEY domvalue_l = <l_review_it>-status.
+      IF sy-subrc = 0.
+        <l_item>-it_status       = <l_taba>-ddtext.
+      ENDIF. " IF sy-subrc = 0
+
+    ENDLOOP. " LOOP AT t_review_it_act ASSIGNING FIELD-SYMBOL(<l_review_it>)
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_DATE_FORMATTED
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_W_REVIEW_HD_ACT_LAST_REV_DATE  text
+*      <--P_P_W_HEADER_VALUE_LAST_REVIEW_D  text
+*----------------------------------------------------------------------*
+  FORM sub_date_formatted  USING    p_date TYPE datum " Date
+  CHANGING p_date_formatted TYPE cacl_string.         " String
+
+    CONSTANTS:
+    lc_hiphen TYPE char1 VALUE '-'. " Hiphen of type CHAR1
+
+* Local data declaration
+    DATA:
+      l_day      TYPE numc2, " Two digit number
+      l_month_no TYPE numc2, " Two digit number
+      l_year     TYPE numc4, " Count parameters
+      l_month    TYPE fcktx. " Month short text
+
+    IF p_date IS NOT INITIAL.
+
+*   Date format will be always YYYYMMDD for input to this subroutine
+      l_day = p_date+6(2).
+      l_month_no = p_date+4(2).
+      l_year = p_date+0(4).
+
+*   Return the month name
+      CALL FUNCTION 'ISP_GET_MONTH_NAME'
+        EXPORTING
+          language     = sy-langu
+          month_number = l_month_no
+        IMPORTING
+          shorttext    = l_month
+        EXCEPTIONS
+          calendar_id  = 1
+          date_error   = 2
+          not_found    = 3
+          wrong_input  = 4
+          OTHERS       = 5.
+
+      IF sy-subrc = 0.
+*     Convert date to DDMMMYYYY format
+        CONCATENATE l_day
+        l_month
+        l_year
+        INTO p_date_formatted
+        SEPARATED BY lc_hiphen.
+      ELSE. " ELSE -> IF sy-subrc = 0
+        CONCATENATE l_day
+        l_month_no
+        l_year
+        INTO p_date_formatted
+        SEPARATED BY lc_hiphen.
+      ENDIF. " IF sy-subrc = 0
+    ENDIF. " IF p_date IS NOT INITIAL
+
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_MODIFY_SCREEN
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_modify_screen .
+
+    LOOP AT SCREEN.
+
+
+      IF screen-group1 = 'DP'.
+
+        IF sy-tcode <> 'YREVIEW_TOOL_MAIL'.
+
+          screen-active = '0'.
+*        IF screen-name = 'P_COUNT'.
+          screen-invisible = '1'.
+*          Screen-output = '0'.
+*          screen-input = '0'.
+*        ENDIF. " IF screen-name = 'P_COUNT'
+
+        ENDIF. " IF sy-tcode <> 'YREVIEW_TOOL_MAIL'
+      ENDIF. " IF screen-group1 = 'DP'
+      MODIFY SCREEN.
+    ENDLOOP. " LOOP AT SCREEN
+  ENDFORM.
+  "++SHARMH2
+*&---------------------------------------------------------------------*
+*&      Form  SUB_REVIEW_REWORK_EFFRT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      <--P_LW_ZCAP_REVIEW_HD  text
+*----------------------------------------------------------------------*
+  FORM sub_review_rework_effrt  CHANGING pw_zcap_review_hd TYPE zcap_review_hd. " Header table for review process tracking
+
+    DATA: lt_fields TYPE STANDARD TABLE OF sval, " Interface for function group SPO4
+          lw_sval   TYPE sval.                   " Interface for function group SPO4
+    IF g_role_indc = c_role_r.
+      lw_sval-fieldname = 'REVIEW_EFFORT'.
+      lw_sval-tabname = 'ZCAP_REVIEW_HD'.
+      lw_sval-fieldtext = 'Review Effort'.
+    ELSE. " ELSE -> IF g_role_indc = c_role_r
+      lw_sval-fieldname = 'REWORK_EFFORT'.
+      lw_sval-tabname = 'ZCAP_REVIEW_HD'.
+      lw_sval-fieldtext = 'Rework Effort'.
+    ENDIF. " IF g_role_indc = c_role_r
+    APPEND lw_sval TO lt_fields.
+
+    CALL FUNCTION 'POPUP_GET_VALUES'
+      EXPORTING
+        popup_title     = 'Enter Review/Rework Effort'
+        start_column    = '25'
+        start_row       = '7'
+      TABLES
+        fields          = lt_fields
+      EXCEPTIONS
+        error_in_fields = 1
+        OTHERS          = 2.
+    IF sy-subrc = 0.
+      READ TABLE t_review_hd ASSIGNING FIELD-SYMBOL(<fs_hd_data>)
+      INDEX 1.
+      IF sy-subrc = 0.
+        READ TABLE lt_fields INTO lw_sval INDEX 1.
+        IF sy-subrc = 0.
+          IF g_role_indc = c_role_r.
+            pw_zcap_review_hd-review_effort = <fs_hd_data>-review_effort + lw_sval-value.
+          ELSE. " ELSE -> IF g_role_indc = c_role_r
+            pw_zcap_review_hd-rework_effort = <fs_hd_data>-rework_effort + lw_sval-value.
+          ENDIF. " IF g_role_indc = c_role_r
+        ENDIF. " IF sy-subrc = 0
+      ENDIF. " IF sy-subrc = 0
+    ENDIF. " IF sy-subrc = 0
+
+
+  ENDFORM.
+ "++SHARMH2
+
+  FORM sub_gen_code_review_checklist.
+*
+*    CALL METHOD zcap_review_checklist=>save_review_data
+*      EXPORTING
+*        t_e070          = t_e070
+*        t_e071          = t_e071
+*        t_review_it_act = t_review_it_act
+*        w_review_hd_act = w_review_hd_act
+*        w_inp_ba        = w_inp_ba.
+
+    CALL METHOD zcap_review_checklist=>submit_download_checklist
+      EXPORTING
+        iv_review_hd = w_review_hd_act
+        t_e070       = t_e070
+        t_e071       = t_e071.
+
+
+
+    .
+*    DATA lo_code_rev TYPE REF TO ycl_mdt_review_tool.
+*
+*    CREATE OBJECT lo_code_rev
+*      EXPORTING
+*        iv_ecrno = w_inp_ba-ecrno.
+*
+*    CALL METHOD lo_code_rev->generate_code_review_checklist
+*      EXPORTING
+*        iv_project = w_inp_ba-project
+*        iv_prj_ref = w_inp_ba-prj_ref
+*        iv_counter = '1'.
+*    .
+
+
+  ENDFORM.
+*** Begin ADD:ALIY2:1-Aug-2019
+*&---------------------------------------------------------------------*
+*&      Form  SUB_GET_TRANSPORT_DETAILS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+  FORM sub_get_transport_details .
+
+    DATA: lr_text TYPE RANGE OF as4text,       " Short Description of Repository Objects
+          ls_text LIKE LINE OF lr_text,
+          lt_e07t TYPE STANDARD TABLE OF e07t, " Transport system: Short texts of request/tasks
+          ls_tr   TYPE ty_tr,
+          lt_task TYPE STANDARD TABLE OF ty_tr.
+
+    DATA: l_confirm_val TYPE char1,          " Confirm_val of type CHAR1
+          l_target_gts  TYPE rfcdes-rfcdest, " Logical destination (specified in function call)
+          l_target_crm  TYPE rfcdes-rfcdest, " Logical destination (specified in function call)
+          l_target_apo  TYPE rfcdes-rfcdest. " Logical destination (specified in function call)
+
+* Get the GTS system
+*   Begin DEL:MAZUMS4:16-Feb-2023
+*    CONCATENATE sy-sysid+0(1)
+*            'G'
+*            sy-sysid+2(1)
+*            'CLNT'
+*            '010'
+*            INTO l_target_gts.
+
+** get the APO system
+*    CONCATENATE sy-sysid+0(1)
+*            'A'
+*            sy-sysid+2(1)
+*            'CLNT'
+*            '010'
+*            INTO l_target_apo.
+*
+** get the CRM system
+*    CONCATENATE sy-sysid+0(1)
+*            'C'
+*            sy-sysid+2(1)
+*            'CLNT'
+*            '010'
+*            INTO l_target_crm.
+*   End DEL:MAZUMS4:16-Feb-2023
+*   Begin ADD:MAZUMS4:16-Feb-2023
+    l_target_gts = gc_rfcdest_dg.
+    l_target_apo = gc_rfcdest_da.
+    l_target_crm = gc_rfcdest_dc.
+*   End ADD:MAZUMS4:16-Feb-2023
+
+    LOOP AT s_tr INTO DATA(ls_trans)
+      WHERE low+0(2) EQ 'DG'.
+* Get the transport details from GTS system(DG1)
+      DATA(l_target) = l_target_gts.
+      PERFORM sub_get_remote_transport USING l_target.
+      EXIT.
+      CLEAR: ls_trans.
+    ENDLOOP. " LOOP AT s_tr INTO DATA(ls_trans)
+
+    LOOP AT s_tr INTO ls_trans
+      WHERE low+0(2) EQ 'DA'.
+* Get the transport details from APO system(DA1)
+      CLEAR:l_target.
+      l_target = l_target_apo.
+      PERFORM sub_get_remote_transport USING l_target.
+      EXIT.
+      CLEAR: ls_trans.
+    ENDLOOP. " LOOP AT s_tr INTO ls_trans
+
+    LOOP AT s_tr INTO ls_trans
+  WHERE low+0(2) EQ 'DC'.
+* Get the transport details from APO system(DA1)
+      CLEAR:l_target.
+      l_target = l_target_crm.
+      PERFORM sub_get_remote_transport USING l_target.
+      EXIT.
+      CLEAR: ls_trans.
+    ENDLOOP. " LOOP AT s_tr INTO ls_trans
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_GET_REMOTE_TRANSPORT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_get_remote_transport USING p_target TYPE rfcdest. " Logical destination (specified in function call)
+
+    DATA: lt_tr TYPE STANDARD TABLE OF ty_tr,
+          ls_tr TYPE ty_tr.
+    DATA : lt_t_options   TYPE TABLE OF rfc_db_opt,                          " RFC Table Read: Select Options / WHERE Clause
+           lt_source_code TYPE STANDARD TABLE OF abaptxt255  INITIAL SIZE 0, " ABAP Text Line with Length 255
+           lw_source      TYPE abaptxt255,                                   " ABAP Text Line with Length 255
+           ls_options     TYPE rfc_db_opt,                                   " RFC Table Read: Select Options / WHERE Clause
+           ls_fields      TYPE rfc_db_fld,                                   " RFC Table Read: Description of Fields to Retrieve
+           ls_e071        TYPE ty_e071,                                      " Change & Transport System: Object Entries of Requests/Tasks
+           lt_e071        TYPE STANDARD TABLE OF ty_e071.                    " Change & Transport System: Object Entries of Requests/Tasks
+
+    DATA:l_rfc_dest TYPE rfcdes-rfcdest, " Logical destination (specified in function call)
+         l_text     TYPE string,
+         l_len      TYPE i,              " Len of type Integers
+         l_tabname  TYPE tabname.        " Table Name
+
+    CONSTANTS:lc_percent TYPE char1 VALUE '%', " Percent of type CHAR1
+              lc_bracket TYPE char1 VALUE ')'. " Bracket of type CHAR1
+
+    CLEAR: t_data.
+    DATA:ls_data1 TYPE tab512 . " Table with a 512 byte field
+
+    LOOP AT  s_tr INTO DATA(ls_trans)
+*       WHERE low+0(2) = p_target+0(2). " --DEL:MAZUMS4:16-Feb-2023
+      WHERE low+0(2) = p_target+5(2). " ++ADD:MAZUMS4:16-Feb-2023
+      ls_data1-wa = ls_trans-low.
+      APPEND ls_data1 TO t_data.
+      CLEAR:ls_data1,ls_trans.
+    ENDLOOP. " LOOP AT s_tr INTO DATA(ls_trans)
+
+    PERFORM sub_get_rfc_input.
+ "required fields
+    CLEAR: t_fields.
+    ls_fields-fieldname = c_trkorr.
+    APPEND ls_fields TO t_fields.
+    CLEAR:ls_fields .
+ "required fields
+    ls_fields-fieldname = c_trfunction.
+    APPEND ls_fields TO t_fields.
+    CLEAR:ls_fields,t_data.
+
+    l_tabname = c_e070.
+    PERFORM sub_get_table_data USING p_target
+                                     l_tabname.
+
+    LOOP AT t_data INTO DATA(ls_data).
+      CONDENSE ls_data-wa.
+      SPLIT ls_data-wa AT space INTO: DATA(l_trkorr)  DATA(l_trfunc).
+
+      CASE  l_trfunc.
+        WHEN 'K'.
+          ls_tr-trkorr = l_trkorr.
+          ls_tr-trfunction = l_trfunc .
+          APPEND ls_tr TO lt_tr.
+          CLEAR:ls_tr.
+
+        WHEN 'W'.
+          ls_tr-trkorr = l_trkorr.
+          ls_tr-trfunction = l_trfunc .
+          APPEND ls_tr TO lt_tr.
+          CLEAR:ls_tr.
+        WHEN OTHERS.
+      ENDCASE.
+
+    ENDLOOP. " LOOP AT t_data INTO DATA(ls_data)
+
+    APPEND LINES OF lt_tr TO t_tr.
+
+    PERFORM sub_get_rfc_input1.
+ "required fields
+    CLEAR: t_fields.
+    ls_fields-fieldname = c_trkorr.
+    APPEND ls_fields TO t_fields.
+    CLEAR:ls_fields .
+ "required fields
+    ls_fields-fieldname = c_trfunction.
+    APPEND ls_fields TO t_fields.
+    CLEAR:ls_fields,t_data.
+
+    l_tabname = c_e070.
+    PERFORM sub_get_table_data USING p_target
+                                     l_tabname.
+
+    LOOP AT t_data INTO ls_data.
+      CONDENSE ls_data-wa.
+      SPLIT ls_data-wa AT space INTO: l_trkorr l_trfunc.
+
+      CASE  l_trfunc.
+        WHEN 'K'.
+          ls_tr-trkorr = l_trkorr.
+          ls_tr-trfunction = l_trfunc .
+          APPEND ls_tr TO lt_tr.
+          CLEAR:ls_tr.
+
+        WHEN 'W'.
+          ls_tr-trkorr = l_trkorr.
+          ls_tr-trfunction = l_trfunc .
+          APPEND ls_tr TO lt_tr.
+          CLEAR:ls_tr.
+        WHEN OTHERS.
+          ls_tr-trkorr = l_trkorr.
+          ls_tr-trfunction = l_trfunc .
+          APPEND ls_tr TO lt_tr.
+          CLEAR:ls_tr.
+      ENDCASE.
+
+    ENDLOOP. " LOOP AT t_data INTO ls_data
+
+    APPEND LINES OF lt_tr TO t_tr.
+    SORT t_tr BY trkorr.
+    DELETE ADJACENT DUPLICATES FROM t_tr COMPARING trkorr.
+
+    LOOP AT  t_tr INTO DATA(ls_trans1).
+      ls_data1-wa = ls_trans1-trkorr.
+      APPEND ls_data1 TO t_data.
+      CLEAR:ls_data1,ls_trans1.
+    ENDLOOP. " LOOP AT t_tr INTO DATA(ls_trans1)
+
+    PERFORM sub_get_rfc_input.
+
+ "required fields
+    CLEAR: t_fields.
+    ls_fields-fieldname = c_trkorr.
+    APPEND ls_fields TO t_fields.
+    CLEAR:ls_fields.
+ "required fields
+    ls_fields-fieldname = c_pgmid.
+    APPEND ls_fields TO t_fields.
+    CLEAR:ls_fields .
+
+ "required fields
+    ls_fields-fieldname = c_object.
+    APPEND ls_fields TO t_fields.
+    CLEAR:ls_fields .
+ "required fields
+    ls_fields-fieldname = c_obj_name.
+    APPEND ls_fields TO t_fields.
+    CLEAR:ls_fields, t_data.
+
+    l_tabname = c_e071.
+    PERFORM sub_get_table_data USING p_target
+                                     l_tabname.
+
+    LOOP AT t_fields ASSIGNING FIELD-SYMBOL(<fs_fields>).
+      CASE <fs_fields>-fieldname.
+        WHEN c_trkorr.
+          DATA(l_offset_tr) = <fs_fields>-offset.
+          DATA(l_len_tr) = <fs_fields>-length.
+        WHEN c_pgmid.
+          DATA(l_offset_pg) = <fs_fields>-offset.
+          DATA(l_len_pg) = <fs_fields>-length.
+        WHEN c_object.
+          DATA(l_offset_obj) = <fs_fields>-offset.
+          DATA(l_len_obj) = <fs_fields>-length.
+        WHEN c_obj_name.
+          DATA(l_offset_objnm) = <fs_fields>-offset.
+          DATA(l_len_objnm) = <fs_fields>-length.
+        WHEN OTHERS.
+      ENDCASE.
+
+    ENDLOOP. " LOOP AT t_fields ASSIGNING FIELD-SYMBOL(<fs_fields>)
+
+    LOOP AT t_data INTO ls_data.
+      ls_e071-trkorr = ls_data-wa+l_offset_tr(l_len_tr).
+      ls_e071-pgmid = ls_data-wa+l_offset_pg(l_len_pg).
+      ls_e071-object = ls_data-wa+l_offset_obj(l_len_obj).
+      ls_e071-obj_name = ls_data-wa+l_offset_objnm(l_len_objnm).
+      APPEND ls_e071 TO lt_e071.
+      CLEAR:ls_data.
+    ENDLOOP. " LOOP AT t_data INTO ls_data
+
+    APPEND LINES OF lt_e071 TO t_e071_rfc.
+
+    DATA: ls_e070_a TYPE ty_e070. " Transport system: Headers of requests/tasks
+    LOOP AT t_tr[] INTO DATA(ls_tr_a).
+      ls_e070_a-trkorr = ls_tr_a-trkorr.
+      ls_e070_a-trfunction = ls_tr_a-trfunction.
+      APPEND ls_e070_a TO t_e070[].
+      CLEAR: ls_tr_a, ls_e070_a.
+    ENDLOOP. " LOOP AT t_tr[] INTO DATA(ls_tr_a)
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_GET_RFC_INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+  FORM sub_get_rfc_input .
+
+    DATA:ls_options TYPE rfc_db_opt, " RFC Table Read: Select Options / WHERE Clause
+         l_text     TYPE string,
+         l_lines    TYPE i.          " Lines of type Integers
+
+    l_lines = lines( t_data ).
+
+    l_text = 'TRKORR in ('.
+    LOOP AT t_data INTO DATA(ls_data).
+      SPLIT ls_data-wa AT space INTO: DATA(l_trkorr)  DATA(l_trfunc).
+*      LOOP AT s_tr INTO DATA(ls_data).
+      IF l_lines > 1.
+        IF  sy-tabix = 1.
+          CONCATENATE l_text ''''l_trkorr'''' ',' INTO ls_options-text.
+          APPEND ls_options TO t_options.
+          CLEAR: ls_options.
+        ELSEIF sy-tabix = l_lines.
+          CONCATENATE ''''l_trkorr''''  c_bracket INTO ls_options-text.
+          APPEND ls_options TO t_options.
+          CLEAR: ls_options.
+        ELSE. " ELSE -> IF sy-tabix = 1
+          CONCATENATE ''''l_trkorr'''' ',' INTO ls_options-text.
+          APPEND ls_options TO t_options.
+          CLEAR: ls_options.
+        ENDIF. " IF sy-tabix = 1
+      ELSE. " ELSE -> IF l_lines > 1
+        CONCATENATE 'TRKORR = ' '''' l_trkorr '''' INTO ls_options-text.
+        APPEND ls_options TO t_options.
+        CLEAR: ls_options.
+      ENDIF. " IF l_lines > 1
+    ENDLOOP. " LOOP AT t_data INTO DATA(ls_data)
+
+  ENDFORM.
+  FORM sub_get_rfc_input1 .
+
+    DATA:ls_options TYPE rfc_db_opt, " RFC Table Read: Select Options / WHERE Clause
+         l_text     TYPE string,
+         l_lines    TYPE i.          " Lines of type Integers
+
+    l_lines = lines( t_data ).
+
+    l_text = 'STRKORR in ('.
+    LOOP AT t_data INTO DATA(ls_data).
+      SPLIT ls_data-wa AT space INTO: DATA(l_trkorr)  DATA(l_trfunc).
+*      LOOP AT s_tr INTO DATA(ls_data).
+      IF l_lines > 1.
+        IF  sy-tabix = 1.
+          CONCATENATE l_text ''''l_trkorr'''' ',' INTO ls_options-text.
+          APPEND ls_options TO t_options.
+          CLEAR: ls_options.
+        ELSEIF sy-tabix = l_lines.
+          CONCATENATE ''''l_trkorr''''  c_bracket INTO ls_options-text.
+          APPEND ls_options TO t_options.
+          CLEAR: ls_options.
+        ELSE. " ELSE -> IF sy-tabix = 1
+          CONCATENATE ''''l_trkorr'''' ',' INTO ls_options-text.
+          APPEND ls_options TO t_options.
+          CLEAR: ls_options.
+        ENDIF. " IF sy-tabix = 1
+      ELSE. " ELSE -> IF l_lines > 1
+        CONCATENATE 'STRKORR = ' '''' l_trkorr '''' INTO ls_options-text.
+        APPEND ls_options TO t_options.
+        CLEAR: ls_options.
+      ENDIF. " IF l_lines > 1
+    ENDLOOP. " LOOP AT t_data INTO DATA(ls_data)
+
+  ENDFORM.
+*** End ADD:ALIY2:1-Aug-2019
+*&---------------------------------------------------------------------*
+*&      Form  SUB_GET_TABLE_DATA
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_P_TARGET  text
+*----------------------------------------------------------------------*
+  FORM sub_get_table_data USING p_target  TYPE rfcdest  " Logical destination (specified in function call)
+                                p_tabname TYPE tabname. " Table Name
+
+    CALL FUNCTION 'RFC_READ_TABLE' DESTINATION p_target
+      EXPORTING
+        query_table          = p_tabname
+      TABLES
+        options              = t_options
+        fields               = t_fields
+        data                 = t_data
+      EXCEPTIONS
+        table_not_available  = 1
+        table_without_data   = 2
+        option_not_valid     = 3
+        field_not_valid      = 4
+        not_authorized       = 5
+        data_buffer_exceeded = 6
+        OTHERS               = 7.
+    IF sy-subrc = 0.
+      CLEAR:t_options.
+    ENDIF. " IF sy-subrc = 0
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_ECRLIST
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_ecrlist .
+    DATA: lt_rettab  TYPE STANDARD TABLE OF ddshretval INITIAL SIZE 0, " Interface Structure Search Help <-> Help System
+          lt_mapping TYPE STANDARD TABLE OF dselc INITIAL SIZE 0,      " Screen selection from process logic
+          ls_mapping TYPE dselc.                                       " Screen selection from process logic
+*Fetch list of ECR for which Review needs to be initiated
+    SELECT ecr_no, " ECR Number (GPS)
+           objid        " ++ADD:MAZUMS4
+    FROM zcap_review_hd " Header table for review process tracking
+    INTO TABLE @DATA(lt_ecr)
+    WHERE status = '1'.
+    IF sy-subrc = 0.
+      SORT lt_ecr BY ecr_no objid.
+
+*     Begin ADD:MAZUMS4:Review Tool update
+      DELETE ADJACENT DUPLICATES FROM lt_ecr COMPARING ecr_no
+                                                       objid.
+
+      ls_mapping-fldname = 'F0001'.
+      ls_mapping-dyfldname   = 'P_ECR_NO'.
+      APPEND ls_mapping TO lt_mapping.
+      CLEAR ls_mapping.
+
+      ls_mapping-fldname = 'F0002'.
+      ls_mapping-dyfldname   = 'P_OBJ_ID'.
+      APPEND ls_mapping TO lt_mapping.
+      CLEAR ls_mapping.
+*     End ADD:MAZUMS4:Review Tool update
+      CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+        EXPORTING
+          retfield        = 'ECR_NO'
+          dynpprog        = sy-repid
+          dynpnr          = sy-dynnr
+          dynprofield     = 'P_ECR_NO'
+          value_org       = 'S'
+        TABLES
+          value_tab       = lt_ecr
+          return_tab      = lt_rettab " ++ADD:MAZUMS4:Review Tool update
+          dynpfld_mapping = lt_mapping." ++ADD:MAZUMS4:Review Tool update
+    ENDIF. " IF sy-subrc = 0
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_ASSIGN_REVIEW
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_assign_review.
+
+    DATA: lt_fieldcat TYPE slis_t_fieldcat_alv,
+          ls_fieldcat TYPE slis_fieldcat_alv,
+          gs_selfield TYPE slis_selfield.
+
+    CASE sscrfields-ucomm.
+      WHEN 'FC01'.
+        ls_fieldcat-fieldname  = 'PROJECT'.
+        ls_fieldcat-seltext_m  = 'Project'.
+        APPEND ls_fieldcat TO lt_fieldcat.
+        CLEAR:ls_fieldcat.
+
+        ls_fieldcat-fieldname  = 'PRJ_REF'.
+        ls_fieldcat-seltext_m  = 'Project Reference'.
+        APPEND ls_fieldcat TO lt_fieldcat.
+        CLEAR:ls_fieldcat.
+
+        ls_fieldcat-fieldname  = 'ECR_NO'.
+        ls_fieldcat-seltext_m  = 'ECR Number'.
+        APPEND ls_fieldcat TO lt_fieldcat.
+        CLEAR:ls_fieldcat.
+
+        ls_fieldcat-fieldname  = 'DEVELOPER_ID'.
+        ls_fieldcat-seltext_m  = 'Developer ID'.
+        APPEND ls_fieldcat TO lt_fieldcat.
+        CLEAR:ls_fieldcat.
+
+        ls_fieldcat-fieldname  = 'REVIEWER_ID'.
+        ls_fieldcat-seltext_m  = 'Reviewer ID'.
+        APPEND ls_fieldcat TO lt_fieldcat.
+        CLEAR:ls_fieldcat.
+
+*        ls_fieldcat-fieldname  = 'STATUS'.
+*        ls_fieldcat-seltext_m  = 'Status'.
+*        APPEND ls_fieldcat TO lt_fieldcat.
+*        CLEAR:ls_fieldcat.
+
+        ls_fieldcat-fieldname  = 'ETA'.
+        ls_fieldcat-seltext_m  = 'ETA'.
+        APPEND ls_fieldcat TO lt_fieldcat.
+        CLEAR:ls_fieldcat.
+
+        ls_fieldcat-fieldname  = 'OBJID'.
+        ls_fieldcat-seltext_m  = 'OBJECT_ID'.
+        APPEND ls_fieldcat TO lt_fieldcat.
+        CLEAR:ls_fieldcat.
+
+        SELECT project, prj_ref,ecr_no,developer_id,reviewer_id,status,eta,objid
+          FROM zcap_review_hd " Header table for review process tracking
+          INTO TABLE @DATA(lt_rev_det)
+          WHERE reviewer_id = @sy-uname
+          AND status = '2'.
+        IF sy-subrc = 0.
+          CALL FUNCTION 'REUSE_ALV_POPUP_TO_SELECT'
+            EXPORTING
+              i_title       = 'Assigned Review'
+              i_tabname     = '1'
+              it_fieldcat   = lt_fieldcat
+            IMPORTING
+              es_selfield   = gs_selfield
+            TABLES
+              t_outtab      = lt_rev_det
+            EXCEPTIONS
+              program_error = 1
+              OTHERS        = 2.
+          IF sy-subrc = 0.
+            READ TABLE lt_rev_det INDEX gs_selfield-tabindex INTO DATA(ls_rev_det).
+            MOVE ls_rev_det-ecr_no TO p_ecr_no.
+            MOVE ls_rev_det-objid  TO p_obj_id.
+          ENDIF. " IF sy-subrc = 0
+        ENDIF. " IF sy-subrc = 0
+
+      WHEN OTHERS.
+    ENDCASE.
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_CODE_INSPECTOR_ERROR
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_code_inspector_error .
+
+    TYPES: BEGIN OF ts_msg,
+             objname TYPE sobj_name, " Object Name in Object Directory
+             objtype TYPE trobjtype,
+             error   TYPE i,         " Error of type Integers
+             warning TYPE i,         " Warning of type Integers
+           END OF ts_msg,
+           tt_msg TYPE STANDARD TABLE OF ts_msg.
+    DATA:lt_tr       TYPE tt_tr,
+         lt_msg      TYPE tt_msg,
+         ls_msg      TYPE ts_msg,
+*         lt_result   TYPE scit_rest,
+*         lt_list_tmp TYPE scit_alvlistn,
+         lt_list     TYPE scit_alvlistn,
+         lt_fieldcat TYPE slis_t_fieldcat_alv,
+         ls_fieldcat TYPE slis_fieldcat_alv,
+         gs_selfield TYPE slis_selfield.
+    CONSTANTS:lc_1 TYPE int4 VALUE '1'. " Natural number
+
+
+    LOOP AT t_e070 ASSIGNING FIELD-SYMBOL(<ls_e070>).
+      IF <ls_e070> IS ASSIGNED AND <ls_e070>-trfunction = 'K'.
+        APPEND INITIAL LINE TO lt_tr ASSIGNING FIELD-SYMBOL(<ls_tr>).
+        <ls_tr>-trkorr = <ls_e070>-trkorr.
+      ENDIF. " IF <ls_e070> IS ASSIGNED AND <ls_e070>-trfunction = 'K'
+    ENDLOOP. " LOOP AT t_e070 ASSIGNING FIELD-SYMBOL(<ls_e070>)
+    CLEAR: lt_list.
+    PERFORM sub_get_sci_details USING lt_tr
+                                CHANGING lt_list.
+    IF lt_list IS NOT INITIAL.
+      DATA(lt_list_prio) = lt_list[].
+    ELSE. " ELSE -> IF lt_list IS NOT INITIAL
+      APPEND INITIAL LINE TO lt_list_prio ASSIGNING FIELD-SYMBOL(<ls_list_prio>).
+      IF <ls_list_prio> IS ASSIGNED.
+        READ TABLE t_e071 INTO DATA(ls_e071) INDEX 1.
+        IF sy-subrc = 0.
+          <ls_list_prio>-objname = ls_e071-obj_name.
+          <ls_list_prio>-objtype = ls_e071-object.
+        ENDIF. " IF sy-subrc = 0
+        <ls_list_prio>-error = space.
+        <ls_list_prio>-warning = space.
+      ENDIF. " IF <ls_list_prio> IS ASSIGNED
+    ENDIF. " IF lt_list IS NOT INITIAL
+
+    ls_fieldcat-fieldname  = 'OBJNAME'.
+    ls_fieldcat-seltext_m  = 'Object Name'.
+    APPEND ls_fieldcat TO lt_fieldcat.
+    CLEAR:ls_fieldcat.
+
+    ls_fieldcat-fieldname  = 'OBJTYPE'.
+    ls_fieldcat-seltext_m  = 'Object Type'.
+    APPEND ls_fieldcat TO lt_fieldcat.
+    CLEAR:ls_fieldcat.
+
+    ls_fieldcat-fieldname  = 'ERROR'.
+    ls_fieldcat-seltext_m  = 'Number of errors'.
+    APPEND ls_fieldcat TO lt_fieldcat.
+    CLEAR:ls_fieldcat.
+
+    ls_fieldcat-fieldname  = 'WARNING'.
+    ls_fieldcat-seltext_m  = 'Number of Warnings'.
+    APPEND ls_fieldcat TO lt_fieldcat.
+    CLEAR:ls_fieldcat.
+
+    SORT lt_list_prio BY objname.
+    DATA:lv_p1 TYPE i, " P1 of type Integers
+         lv_p2 TYPE i. " P2 of type Integers
+    LOOP AT lt_list_prio ASSIGNING FIELD-SYMBOL(<ls_list>).
+      IF <ls_list>-kind = '1_E'.
+        lv_p1 = lv_p1 + 1.
+      ENDIF. " IF <ls_list>-kind = '1_E'
+      IF <ls_list>-kind = '2_W'.
+        lv_p2 = lv_p2 + 1.
+      ENDIF. " IF <ls_list>-kind = '2_W'
+      AT END OF objname.
+        ls_msg-objname = <ls_list>-objname.
+        ls_msg-objtype = <ls_list>-objtype.
+        ls_msg-error = lv_p1.
+        ls_msg-warning = lv_p2.
+        APPEND ls_msg TO lt_msg.
+        CLEAR:lv_p1,lv_p2,ls_msg.
+      ENDAT.
+
+    ENDLOOP. " LOOP AT lt_list_prio ASSIGNING FIELD-SYMBOL(<ls_list>)
+
+    IF lt_msg IS NOT INITIAL.
+      CALL FUNCTION 'REUSE_ALV_POPUP_TO_SELECT'
+        EXPORTING
+          i_title       = 'Code Inspector Result'
+          i_tabname     = '1'
+          it_fieldcat   = lt_fieldcat
+        IMPORTING
+          es_selfield   = gs_selfield
+        TABLES
+          t_outtab      = lt_msg
+        EXCEPTIONS
+          program_error = 1
+          OTHERS        = 2.
+      IF sy-subrc = 0.
+        gv_flag = abap_true.
+        READ TABLE lt_msg INDEX gs_selfield-tabindex INTO ls_msg.
+        IF sy-subrc = 0 AND ( ls_msg-error NE 0 OR ls_msg-warning NE 0 ).
+          IF t_points_tab[] IS INITIAL.
+            APPEND INITIAL LINE TO t_points_tab ASSIGNING FIELD-SYMBOL(<ls_point_tab>).
+            IF <ls_point_tab> IS ASSIGNED.
+              <ls_point_tab>-issue_no = lc_1.
+              <ls_point_tab>-obj_name = ls_msg-objname.
+              <ls_point_tab>-obj_type = ls_msg-objtype.
+              <ls_point_tab>-defect_cat = 'CS - Coding Standards not followed'.
+              <ls_point_tab>-defect_subcat = 'SCI/CVA Point'.
+              <ls_point_tab>-issue_desc = 'CVA / SCI error exist'.
+              <ls_point_tab>-priority =   '1 - High'.
+              <ls_point_tab>-last_rev_date = sy-datum.
+              <ls_point_tab>-reviewer_comm  = 'Please remove the CVA/SCI error'.
+
+            ENDIF. " IF <ls_point_tab> IS ASSIGNED
+          ENDIF. " IF t_points_tab[] IS INITIAL
+
+        ENDIF. " IF sy-subrc = 0 AND ( ls_msg-error NE 0 OR ls_msg-warning NE 0 )
+      ENDIF. " IF sy-subrc = 0
+    ELSE. " ELSE -> IF <ls_point_tab> IS ASSIGNED
+      gv_flag = abap_true.
+      MESSAGE i999(zf) WITH 'List Contains no data' INTO DATA(lt_data).
+    ENDIF. " IF lt_msg IS NOT INITIAL
+
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_RFC_CHECK
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_rfc_check  USING uv_rfcdest TYPE rfcdest   " Logical destination (specified in function call)
+                      CHANGING cv_subrc TYPE sysubrc. " Return Code
+
+    CALL FUNCTION 'RFC_PING' DESTINATION uv_rfcdest
+      EXCEPTIONS
+        system_failure        = 1
+        communication_failure = 2
+        OTHERS                = 3.
+    IF sy-subrc = 0.
+      cv_subrc = sy-subrc.
+    ENDIF. " IF sy-subrc = 0
+  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_PENDING_REVIEW
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+  FORM sub_pending_review .
+
+    TYPES: BEGIN OF lts_alv,
+             ecr_no        TYPE z_ecrno,    " ECR Number (GPS)
+             developer_id  TYPE syst_uname, " ABAP System Field: Name of Current User
+             reviewer_name TYPE char40,     " Name of type CHAR40
+             erdat         TYPE erdat,      " Date on Which Record Was Created
+*             eta           TYPE datum,
+             aging         TYPE i,      " Aging of type Integers
+             status        TYPE char25, " Status of type CHAR25
+           END OF lts_alv.
+    DATA: lt_fieldcat TYPE slis_t_fieldcat_alv,
+          ls_fieldcat TYPE slis_fieldcat_alv,
+          gs_selfield TYPE slis_selfield,
+          lt_alv_data TYPE STANDARD TABLE OF lts_alv,
+          lt_tab_a    TYPE STANDARD TABLE OF dd07v, " Generated Table for View
+          lt_tab_b    TYPE STANDARD TABLE OF dd07v. " Generated Table for View
+
+    CONSTANTS:lc_stat_01 TYPE z_review_stat VALUE '1', " Review Status
+              lc_stat_02 TYPE z_review_stat VALUE '2'. " Review Status
+
+    CASE sscrfields-ucomm.
+      WHEN 'FC02'.
+        ls_fieldcat-fieldname  = 'ECR_NO'.
+        ls_fieldcat-seltext_m  = 'Ecr Number'.
+        APPEND ls_fieldcat TO lt_fieldcat.
+        CLEAR:ls_fieldcat.
+
+        ls_fieldcat-fieldname  = 'DEVELOPER_ID'.
+        ls_fieldcat-seltext_m  = 'Developer'.
+        APPEND ls_fieldcat TO lt_fieldcat.
+        CLEAR:ls_fieldcat.
+
+        ls_fieldcat-fieldname  = 'REVIEWER_NAME'.
+        ls_fieldcat-seltext_m  = 'Reviewer Name'.
+        APPEND ls_fieldcat TO lt_fieldcat.
+        CLEAR:ls_fieldcat.
+
+        ls_fieldcat-fieldname  = 'ERDAT'.
+        ls_fieldcat-seltext_m  = 'Record Created Date'.
+        APPEND ls_fieldcat TO lt_fieldcat.
+        CLEAR:ls_fieldcat.
+
+*        ls_fieldcat-fieldname  = 'ETA'.
+*        ls_fieldcat-seltext_m  = 'ETA'.
+*        APPEND ls_fieldcat TO lt_fieldcat.
+*        CLEAR:ls_fieldcat.
+
+        ls_fieldcat-fieldname  = 'AGING'.
+        ls_fieldcat-seltext_m  = 'Aging in days'.
+        APPEND ls_fieldcat TO lt_fieldcat.
+        CLEAR:ls_fieldcat.
+
+        ls_fieldcat-fieldname  = 'STATUS'.
+        ls_fieldcat-seltext_m  = 'Status'.
+        APPEND ls_fieldcat TO lt_fieldcat.
+        CLEAR:ls_fieldcat.
+
+        CALL FUNCTION 'DD_DOMA_GET'
+          EXPORTING
+            domain_name   = 'Z_REVIEW_STAT'
+*           GET_STATE     = 'M  '
+            langu         = sy-langu
+*           PRID          = 0
+*           WITHTEXT      = 'X'
+          TABLES
+            dd07v_tab_a   = lt_tab_a
+            dd07v_tab_n   = lt_tab_b
+          EXCEPTIONS
+            illegal_value = 1
+            op_failure    = 2
+            OTHERS        = 3.
+        IF sy-subrc = 0.
+          SORT lt_tab_a BY domvalue_l.
+        ENDIF. " IF sy-subrc = 0
+
+
+        SELECT ecr_no,developer_id,reviewer_name,status,erdat,eta
+          FROM zcap_review_hd " Header table for review process tracking
+          INTO TABLE @DATA(lt_rev_det)
+          WHERE status IN ( @lc_stat_01, @lc_stat_02 ).
+        IF sy-subrc = 0.
+          LOOP AT lt_rev_det ASSIGNING FIELD-SYMBOL(<ls_rev>).
+            APPEND INITIAL LINE TO lt_alv_data ASSIGNING FIELD-SYMBOL(<ls_alv_data>).
+            IF <ls_alv_data> IS ASSIGNED.
+              <ls_alv_data>-ecr_no = <ls_rev>-ecr_no.
+              <ls_alv_data>-developer_id = <ls_rev>-developer_id.
+              <ls_alv_data>-reviewer_name = <ls_rev>-reviewer_name.
+              <ls_alv_data>-erdat = <ls_rev>-erdat.
+              <ls_alv_data>-aging = sy-datum - <ls_rev>-erdat.
+              READ TABLE lt_tab_a ASSIGNING FIELD-SYMBOL(<ls_tab>) WITH KEY domvalue_l = <ls_rev>-status
+                                                                            BINARY SEARCH.
+              IF sy-subrc = 0 AND <ls_tab> IS ASSIGNED.
+                <ls_alv_data>-status = <ls_tab>-ddtext.
+              ENDIF. " IF sy-subrc = 0 AND <ls_tab> IS ASSIGNED
+            ENDIF. " IF <ls_alv_data> IS ASSIGNED
+          ENDLOOP. " LOOP AT lt_rev_det ASSIGNING FIELD-SYMBOL(<ls_rev>)
+
+          CALL FUNCTION 'REUSE_ALV_POPUP_TO_SELECT'
+            EXPORTING
+              i_title       = 'Pending Reviews'
+              i_tabname     = '1'
+              it_fieldcat   = lt_fieldcat
+            IMPORTING
+              es_selfield   = gs_selfield
+            TABLES
+              t_outtab      = lt_alv_data
+            EXCEPTIONS
+              program_error = 1
+              OTHERS        = 2.
+          IF sy-subrc = 0.
+            READ TABLE lt_alv_data INDEX gs_selfield-tabindex INTO DATA(ls_alv_data).
+            MOVE ls_alv_data-ecr_no TO p_ecr_no.
+          ENDIF. " IF sy-subrc = 0
+        ENDIF. " IF sy-subrc = 0
+
+      WHEN OTHERS.
+    ENDCASE.
+
+  ENDFORM.
+*  ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Form  SUB_GET_SCI_DETAILS
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+*      -->P_LT_TR  text
+*      <--P_LT_LIST  text
+*----------------------------------------------------------------------*
+  FORM sub_get_sci_details  USING    ut_tr TYPE tt_tr
+                            CHANGING ct_list TYPE scit_alvlistn.
+    DATA: lt_result   TYPE scit_rest,
+          lt_list_tmp TYPE scit_alvlistn,
+          lv_val      TYPE c LENGTH 32, " Val of type Character
+          lv_variant  TYPE sci_chkv,    " Code Inspector: Element Name of a Check Variant
+          lv_gui_on   TYPE c,           " Gui_on of type Character
+          lv_subrc    TYPE sysubrc,     " Return Code
+          lv_rfcdest  TYPE rfcdest.     " Logical destination (specified in function call)
+
+* Get the Variant name
+    cl_satc_ac_config_access=>load_value(
+         EXPORTING
+           i_key = if_satc_ac_config_state_names=>c_config-ci_check_variant "CI.CHECK.VARIANT
+         IMPORTING
+           e_value = lv_val ).
+    lv_variant = lv_val .
+* Get the SCI details
+    LOOP AT ut_tr ASSIGNING FIELD-SYMBOL(<ls_tr>).
+      CONDENSE <ls_tr>.
+      CASE <ls_tr>-trkorr+0(2).
+        WHEN 'DR'.
+          CALL FUNCTION 'ZSC_TEST_RUN_SCI'
+            EXPORTING
+              iv_variant    = lv_variant
+              iv_tr         = <ls_tr>-trkorr
+            IMPORTING
+              et_result     = lt_result
+              et_plain_list = lt_list_tmp.
+          IF sy-subrc = 0.
+            DELETE lt_list_tmp WHERE kind EQ '3_N'.
+            APPEND LINES OF lt_list_tmp TO ct_list.
+          ENDIF . " IF sy-subrc = 0
+        WHEN 'DC'.
+          lv_rfcdest = gc_rfcdest_dc.
+          PERFORM sub_rfc_check  USING lv_rfcdest
+                                 CHANGING lv_subrc.
+
+          IF lv_subrc = 0.
+
+*            CALL FUNCTION 'ZDC_TEST_RUN_SCI' DESTINATION lv_rfcdest
+*              EXPORTING
+*                iv_variant    = lv_variant
+*                iv_tr         = <ls_tr>-trkorr
+*              IMPORTING
+*                et_result     = lt_result
+*                et_plain_list = lt_list_tmp.
+*            IF sy-subrc = 0.
+*              DELETE lt_list_tmp WHERE kind EQ '3_N'.
+*              APPEND LINES OF lt_list_tmp TO ct_list.
+*            ENDIF.
+          ENDIF. " IF lv_subrc = 0
+        WHEN 'DG'.
+
+          lv_rfcdest = gc_rfcdest_dg.
+          PERFORM sub_rfc_check USING lv_rfcdest
+                                CHANGING lv_subrc.
+          IF lv_subrc = 0.
+
+            CALL FUNCTION 'ZGTS_TEST_RUN_SCI' DESTINATION lv_rfcdest
+              EXPORTING
+                iv_variant    = lv_variant
+                iv_tr         = <ls_tr>-trkorr
+              IMPORTING
+                et_result     = lt_result
+                et_plain_list = lt_list_tmp.
+            IF sy-subrc = 0.
+              DELETE lt_list_tmp WHERE kind EQ '3_N'.
+              APPEND LINES OF lt_list_tmp TO ct_list.
+            ENDIF. " IF sy-subrc = 0
+          ENDIF. " IF lv_subrc = 0
+        WHEN 'DA'.
+
+          lv_rfcdest = gc_rfcdest_da.
+          PERFORM sub_rfc_check USING lv_rfcdest
+                                CHANGING lv_subrc.
+          IF lv_subrc = 0.
+
+            CALL FUNCTION 'ZDA_TEST_RUN_SCI' DESTINATION lv_rfcdest
+              EXPORTING
+                iv_variant    = lv_variant
+                iv_tr         = <ls_tr>-trkorr
+              IMPORTING
+                et_result     = lt_result
+                et_plain_list = lt_list_tmp.
+            IF sy-subrc = 0.
+              DELETE lt_list_tmp WHERE kind EQ '3_N'.
+              APPEND LINES OF lt_list_tmp TO ct_list.
+            ENDIF. " IF sy-subrc = 0
+          ENDIF. " IF lv_subrc = 0
+        WHEN OTHERS.
+      ENDCASE.
+    ENDLOOP. " LOOP AT ut_tr ASSIGNING FIELD-SYMBOL(<ls_tr>)
+
+
+  ENDFORM.
+
+
