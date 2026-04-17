@@ -1,1 +1,797 @@
+class ZCL_MOT_CVC_REPORT_MODEL definition
+  public
+  abstract
+  create public .
 
+public section.
+
+  methods GET_PALLET_ATTRIBUTES
+    returning
+      value(RS_PALLET_ATTRIBUTES) type ZTS_VC_PALLET_ATTR .
+  methods GET_DATA
+    importing
+      !IS_SELECTION_CRITERIA type ANY
+    returning
+      value(RT_DATA) type ZTT_MOT_CVC_REPORT
+    raising
+      ZCX_MOT_CVC_REPORT .
+  methods GET_FIXED_NUMBER_OF_PALLET_LOC
+    importing
+      !IV_MEANS_OF_SHIPPING type ZTV_VC_SHPMH
+    returning
+      value(RV_FIXED_NR) type ZTV_VC_TRATY_NUM
+    raising
+      ZCX_MOT_CVC_REPORT .
+  class-methods _REVISION_LOG .
+protected section.
+
+  data GW_PALLET_TYPE type ZORF_VC_TRATY .
+  data:
+    BEGIN OF gw_uom,
+      weight TYPE gewei,
+      volume TYPE voleh,
+    END OF gw_uom .
+
+  methods SET_MATERIAL_DATA
+    importing
+      !IT_DATA type ANY TABLE .
+  methods CONVERT_TO_PALLETS
+    importing
+      !IV_MATERIAL type MATNR
+      !IV_QUANTITY type ZTV_VC_SD_QUANTITY
+      !IV_QUANTITY_UOM type ZTV_VC_SALES_UNIT
+      !IV_VOLUME type ZTV_VC_VOLUME
+      !IV_VOLUME_UOM type VOLEH
+    returning
+      value(RS_PALLET) type ZTS_MOT_CVC_REPORT_CAL
+    raising
+      ZCX_MOT_CVC_REPORT .
+  methods SET_PALLET_TYPE
+    importing
+      !IV_PALLET_TYPE type ZTV_VC_TRATY
+    raising
+      ZCX_MOT_CVC_REPORT .
+  methods SET_UOM
+    importing
+      !IV_WEIGHT_UOM type GEWEI
+      !IV_VOLUME_UOM type VOLEH .
+  methods SET_CFN_NUMBERS .
+  methods CONVERT_WEIGHT_AND_VOLUME
+    changing
+      !CR_MOT_CVC type ref to ZTS_MOT_CVC_REPORT .
+  methods GET_CFN_NUMBER
+    importing
+      !IV_MATERIAL type MATNR
+    returning
+      value(RV_CFN_NUMBER) type ATWRT .
+private section.
+
+  types:
+    BEGIN OF ts_material_conversion,
+      matnr     TYPE matnr,
+      from      TYPE meins,
+      to        TYPE meins,
+      umren     TYPE umren,
+      umrez     TYPE umrez,
+    END OF ts_material_conversion .
+  types:
+    tt_material_conversion TYPE HASHED TABLE OF zcl_mot_cvc_report_model=>ts_material_conversion
+                                WITH UNIQUE KEY matnr from to .
+  types:
+    BEGIN OF ts_cfn_number,
+      matnr TYPE matnr,
+      cfnnr TYPE atwrt,
+    END OF ts_cfn_number .
+  types:
+    tt_cfn_number TYPE HASHED TABLE OF zcl_mot_cvc_report_model=>ts_cfn_number
+                       WITH UNIQUE KEY matnr .
+  types:
+    tt_material_number TYPE SORTED TABLE OF matnr WITH UNIQUE DEFAULT KEY .
+
+  data GT_DATA type ZTT_MOT_CVC_REPORT .
+  data GT_MATERIAL_CONVERSION type ZCL_MOT_CVC_REPORT_MODEL=>TT_MATERIAL_CONVERSION .
+  data GT_CFN_NUMBERS type ZCL_MOT_CVC_REPORT_MODEL=>TT_CFN_NUMBER .
+  data GT_MATERIAL_NUMBERS type ZCL_MOT_CVC_REPORT_MODEL=>TT_MATERIAL_NUMBER .
+
+  methods CONVERT_QTY_MATERIAL
+    importing
+      !IV_MATERIAL type MATNR
+      !IV_QUANTITY type ZTV_VC_SD_QUANTITY
+      !IV_QUANTITY_UOM type MEINS
+      !IV_TARGET_UOM type MEINS
+    returning
+      value(RV_CONVERTED_QUANTITY) type ZTV_VC_SD_QUANTITY
+    raising
+      ZCX_MOT_CVC_REPORT .
+  methods CONVERT_WEIGHT
+    importing
+      !IV_WEIGHT type ZTV_VC_WEIGHT
+      !IV_UOM type GEWEI
+    returning
+      value(RV_CONV_WEIGHT) type ZTV_VC_WEIGHT
+    raising
+      ZCX_MOT_CVC_REPORT .
+  methods CONVERT_VOLUME
+    importing
+      !IV_VOLUME type ZTV_VC_VOLUME
+      !IV_UOM type VOLEH
+    returning
+      value(RV_CONV_VOLUME) type ZTV_VC_VOLUME
+    raising
+      ZCX_MOT_CVC_REPORT .
+ENDCLASS.
+
+
+
+CLASS ZCL_MOT_CVC_REPORT_MODEL IMPLEMENTATION.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_MODEL->CONVERT_QTY_MATERIAL
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_MATERIAL                    TYPE        MATNR
+* | [--->] IV_QUANTITY                    TYPE        ZTV_VC_SD_QUANTITY
+* | [--->] IV_QUANTITY_UOM                TYPE        MEINS
+* | [--->] IV_TARGET_UOM                  TYPE        MEINS
+* | [<-()] RV_CONVERTED_QUANTITY          TYPE        ZTV_VC_SD_QUANTITY
+* | [!CX!] ZCX_MOT_CVC_REPORT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD convert_qty_material.
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*&---------------------------------------------------------------------*
+
+  DATA: l_input_flp     TYPE f,
+        l_input_flp_alt TYPE f.
+
+  CHECK iv_quantity NE 0.
+
+  READ TABLE me->gt_material_conversion REFERENCE INTO DATA(lr_material_conversion)
+  WITH TABLE KEY matnr = iv_material
+                 from  = iv_quantity_uom
+                 to    = iv_target_uom.
+  IF syst-subrc EQ 0.
+    IF lr_material_conversion->umren EQ 0 AND lr_material_conversion->umrez EQ 0.
+      RAISE EXCEPTION TYPE zcx_mot_cvc_report
+        EXPORTING
+          textid = zcx_mot_cvc_report=>no_conversion_rule.
+    ELSE.
+      l_input_flp           = iv_quantity.
+      rv_converted_quantity = ( lr_material_conversion->umren / lr_material_conversion->umrez ) * l_input_flp.
+    ENDIF.
+  ELSE.
+*-
+    READ TABLE me->gt_material_conversion REFERENCE INTO lr_material_conversion
+    WITH TABLE KEY matnr = iv_material
+                   from  = iv_target_uom
+                   to    = iv_quantity_uom.
+    IF syst-subrc EQ 0.
+      l_input_flp           = iv_quantity.
+      rv_converted_quantity = ( lr_material_conversion->umrez / lr_material_conversion->umren ) * l_input_flp.
+
+      INSERT VALUE zcl_mot_cvc_report_model=>ts_material_conversion( matnr     = iv_material
+                                                                     from      = iv_quantity_uom
+                                                                     to        = iv_target_uom
+                                                                     umren     = lr_material_conversion->umrez
+                                                                     umrez     = lr_material_conversion->umren ) INTO TABLE me->gt_material_conversion.
+    ELSE.
+*-    Try to use other conversion routines
+      LOOP AT me->gt_material_conversion REFERENCE INTO lr_material_conversion WHERE matnr EQ iv_material
+                                                                                 AND to    EQ iv_target_uom.
+*-      Can we convert to the source UoM?
+        READ TABLE me->gt_material_conversion REFERENCE INTO DATA(lr_material_conv_alt)
+        WITH TABLE KEY matnr = iv_material
+                       from  = iv_quantity_uom
+                       to    = lr_material_conversion->from.
+        IF syst-subrc EQ 0.
+          l_input_flp     = iv_quantity.
+          l_input_flp_alt = ( lr_material_conv_alt->umren / lr_material_conv_alt->umrez ) * l_input_flp.
+        ELSE.
+          READ TABLE me->gt_material_conversion REFERENCE INTO lr_material_conv_alt
+          WITH TABLE KEY matnr = iv_material
+                         from  = lr_material_conversion->from
+                         to    = iv_quantity_uom.
+          IF syst-subrc EQ 0.
+            l_input_flp     = iv_quantity.
+            l_input_flp_alt = ( lr_material_conv_alt->umrez / lr_material_conv_alt->umren  ) * l_input_flp.
+          ENDIF.
+        ENDIF.
+
+        CHECK l_input_flp_alt IS NOT INITIAL.
+
+        rv_converted_quantity = ( lr_material_conversion->umren / lr_material_conversion->umrez ) * l_input_flp_alt.
+      ENDLOOP.
+    ENDIF.
+
+
+    IF rv_converted_quantity IS INITIAL.
+      INSERT VALUE zcl_mot_cvc_report_model=>ts_material_conversion( matnr     = iv_material
+                                                                     from      = iv_quantity_uom
+                                                                     to        = iv_target_uom
+                                                                     umren     = 0
+                                                                     umrez     = 0 ) INTO TABLE me->gt_material_conversion.
+
+      RAISE EXCEPTION TYPE zcx_mot_cvc_report
+        EXPORTING
+          textid = zcx_mot_cvc_report=>no_conversion_rule.
+    ENDIF.
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_MOT_CVC_REPORT_MODEL->CONVERT_TO_PALLETS
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_MATERIAL                    TYPE        MATNR
+* | [--->] IV_QUANTITY                    TYPE        ZTV_VC_SD_QUANTITY
+* | [--->] IV_QUANTITY_UOM                TYPE        ZTV_VC_SALES_UNIT
+* | [--->] IV_VOLUME                      TYPE        ZTV_VC_VOLUME
+* | [--->] IV_VOLUME_UOM                  TYPE        VOLEH
+* | [<-()] RS_PALLET                      TYPE        ZTS_MOT_CVC_REPORT_CAL
+* | [!CX!] ZCX_MOT_CVC_REPORT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD convert_to_pallets.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*&---------------------------------------------------------------------*
+
+  DATA: l_quantity_conv             TYPE ztv_vc_quantity,
+        l_quantity_remain           TYPE ztv_vc_quantity,
+        l_quantity_remain_sales_uom TYPE ztv_vc_quantity,
+        l_volume_remain             TYPE ztv_vc_volume,
+
+        l_palful                    TYPE ztv_vc_palful,
+        l_palmix                    TYPE ztv_vc_palmix,
+        l_return_code               TYPE syst_subrc.
+
+
+
+  TRY.
+      l_quantity_conv = me->convert_qty_material( iv_material      = iv_material
+                                                  iv_quantity      = iv_quantity
+                                                  iv_quantity_uom  = iv_quantity_uom
+                                                  iv_target_uom    = me->gw_pallet_type-full_pal_uom ).
+
+*-    Set number of Full pallets
+      l_palful = 0.       "++ADD:HINSBJ1:24-Oct-2019:ECR201902195
+
+*-    Calculate the remaining quantity in alternative UoM
+      l_quantity_remain = l_quantity_conv - l_palful.
+
+*-   Convert remaining quantity to sales UoM
+      TRY.
+          l_quantity_remain_sales_uom = me->convert_qty_material( iv_material     = iv_material
+                                                                  iv_quantity     = l_quantity_remain
+                                                                  iv_quantity_uom = me->gw_pallet_type-full_pal_uom
+                                                                  iv_target_uom   = iv_quantity_uom ).
+        CATCH zcx_mot_cvc_report.
+*-        Quantity conversion failed
+          RAISE EXCEPTION TYPE zcx_mot_cvc_report
+            EXPORTING
+              textid       = zcx_mot_cvc_report=>mat_unit_conversion_failed
+              g_uom_source = me->gw_pallet_type-full_pal_uom
+              g_uom_target = iv_quantity_uom.
+      ENDTRY.
+
+    CATCH zcx_mot_cvc_report.
+*-    Conversion rule not found; conversion not possible..
+      l_quantity_remain_sales_uom = iv_quantity. " Full quantity = remaining quantity
+  ENDTRY.
+
+*- Calculate remaining volume in volume unit
+  l_volume_remain = l_quantity_remain_sales_uom * ( iv_volume / iv_quantity ).
+
+*- Calculate "palmix" :  Remaining volume / net volume of the selected pallet type
+*-                      ( convert UoM remaining volume to volume UoM Pallet )
+  CALL FUNCTION 'UNIT_CONVERSION_SIMPLE'
+    EXPORTING
+      input                = l_volume_remain
+      no_type_check        = ' '
+      unit_in              = iv_volume_uom
+      unit_out             = me->gw_pallet_type-uom
+    IMPORTING
+      output               = l_volume_remain
+    EXCEPTIONS
+      conversion_not_found = 1
+      division_by_zero     = 2
+      input_invalid        = 3
+      output_invalid       = 4
+      overflow             = 5
+      type_invalid         = 6
+      units_missing        = 7
+      unit_in_not_found    = 8
+      unit_out_not_found   = 9.
+  IF syst-subrc EQ 0.
+    l_palmix = l_volume_remain / me->gw_pallet_type-vol_net.
+  ELSE.
+    RAISE EXCEPTION TYPE zcx_mot_cvc_report
+      EXPORTING
+        textid       = zcx_mot_cvc_report=>volume_conversion_failed
+        g_uom_source = iv_volume_uom
+        g_uom_target = me->gw_pallet_type-uom.
+  ENDIF.
+
+  rs_pallet-palful      = l_palful.
+  rs_pallet-palmix      = l_palmix.
+  rs_pallet-palmix_uom  = me->gw_pallet_type-uom.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_MODEL->CONVERT_VOLUME
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_VOLUME                      TYPE        ZTV_VC_VOLUME
+* | [--->] IV_UOM                         TYPE        VOLEH
+* | [<-()] RV_CONV_VOLUME                 TYPE        ZTV_VC_VOLUME
+* | [!CX!] ZCX_MOT_CVC_REPORT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD convert_volume.
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*&---------------------------------------------------------------------*
+
+  CHECK iv_volume IS NOT INITIAL AND iv_uom IS NOT INITIAL.
+
+  IF me->gw_uom-volume IS INITIAL OR
+     me->gw_uom-volume EQ iv_uom.
+
+    rv_conv_volume = iv_volume.
+    RETURN.
+  ENDIF.
+
+  CALL FUNCTION 'UNIT_CONVERSION_SIMPLE'
+    EXPORTING
+      input                = iv_volume
+      no_type_check        = ' '
+      unit_in              = iv_uom
+      unit_out             = me->gw_uom-volume
+    IMPORTING
+      output               = rv_conv_volume
+    EXCEPTIONS
+      conversion_not_found = 1
+      division_by_zero     = 2
+      input_invalid        = 3
+      output_invalid       = 4
+      overflow             = 5
+      type_invalid         = 6
+      units_missing        = 7
+      unit_in_not_found    = 8
+      unit_out_not_found   = 9.
+  IF syst-subrc NE 0.
+    RAISE EXCEPTION TYPE zcx_mot_cvc_report
+      EXPORTING
+        textid       = zcx_mot_cvc_report=>volume_conversion_failed
+        g_uom_source = iv_uom
+        g_uom_target = me->gw_uom-volume.
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_MODEL->CONVERT_WEIGHT
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_WEIGHT                      TYPE        ZTV_VC_WEIGHT
+* | [--->] IV_UOM                         TYPE        GEWEI
+* | [<-()] RV_CONV_WEIGHT                 TYPE        ZTV_VC_WEIGHT
+* | [!CX!] ZCX_MOT_CVC_REPORT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD convert_weight.
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*&---------------------------------------------------------------------*
+
+  CHECK iv_weight IS NOT INITIAL AND iv_uom IS NOT INITIAL.
+
+  IF me->gw_uom-weight IS INITIAL OR
+     me->gw_uom-weight EQ iv_uom.
+
+    rv_conv_weight = iv_weight.
+    RETURN.
+  ENDIF.
+
+  CALL FUNCTION 'UNIT_CONVERSION_SIMPLE'
+    EXPORTING
+      input                = iv_weight
+      no_type_check        = ' '
+      unit_in              = iv_uom
+      unit_out             = me->gw_uom-weight
+    IMPORTING
+      output               = rv_conv_weight
+    EXCEPTIONS
+      conversion_not_found = 1
+      division_by_zero     = 2
+      input_invalid        = 3
+      output_invalid       = 4
+      overflow             = 5
+      type_invalid         = 6
+      units_missing        = 7
+      unit_in_not_found    = 8
+      unit_out_not_found   = 9.
+  IF syst-subrc NE 0.
+    RAISE EXCEPTION TYPE zcx_mot_cvc_report
+      EXPORTING
+        textid       = zcx_mot_cvc_report=>weight_conversion_failed
+        g_uom_source = iv_uom
+        g_uom_target = me->gw_uom-weight.
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_MOT_CVC_REPORT_MODEL->CONVERT_WEIGHT_AND_VOLUME
+* +-------------------------------------------------------------------------------------------------+
+* | [<-->] CR_MOT_CVC                     TYPE REF TO ZTS_MOT_CVC_REPORT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD convert_weight_and_volume.
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*&---------------------------------------------------------------------*
+
+  CHECK me->gw_uom IS NOT INITIAL.
+
+  TRY.
+      DATA(l_ntgew)     = me->convert_weight( iv_weight = cr_mot_cvc->ntgew
+                                              iv_uom    = cr_mot_cvc->gewei ).
+
+      DATA(l_cnf_ntgew) = me->convert_weight( iv_weight = cr_mot_cvc->cnf_ntgew
+                                              iv_uom    = cr_mot_cvc->gewei ).
+
+      cr_mot_cvc->ntgew     = l_ntgew.
+      cr_mot_cvc->cnf_ntgew = l_cnf_ntgew.
+      cr_mot_cvc->gewei     = me->gw_uom-weight.
+    CATCH zcx_mot_cvc_report.
+*-    Non critical; unconverted values will be used
+  ENDTRY.
+
+  TRY.
+      DATA(l_volum) = me->convert_volume( iv_volume     = cr_mot_cvc->volum
+                                          iv_uom        = cr_mot_cvc->voleh ).
+
+      DATA(l_cnf_volum) = me->convert_volume( iv_volume = cr_mot_cvc->cnf_volum
+                                              iv_uom    = cr_mot_cvc->voleh ).
+
+
+      cr_mot_cvc->volum     = l_volum.
+      cr_mot_cvc->cnf_volum = l_cnf_volum.
+      cr_mot_cvc->voleh     = me->gw_uom-volume.
+    CATCH zcx_mot_cvc_report.
+*-    Non critical; unconverted values will be used
+  ENDTRY.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_MOT_CVC_REPORT_MODEL->GET_CFN_NUMBER
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_MATERIAL                    TYPE        MATNR
+* | [<-()] RV_CFN_NUMBER                  TYPE        ATWRT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD get_cfn_number.
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*&---------------------------------------------------------------------*
+
+  CHECK iv_material IS NOT INITIAL.
+
+  READ TABLE me->gt_cfn_numbers REFERENCE INTO DATA(lr_cfn_number) WITH TABLE KEY matnr = iv_material.
+  IF syst-subrc EQ 0.
+    rv_cfn_number = lr_cfn_number->cfnnr.
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_MODEL->GET_DATA
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IS_SELECTION_CRITERIA          TYPE        ANY
+* | [<-()] RT_DATA                        TYPE        ZTT_MOT_CVC_REPORT
+* | [!CX!] ZCX_MOT_CVC_REPORT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD get_data.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*& Change Tag    : -                                                   *
+*&---------------------------------------------------------------------*
+
+"  me->set_selection_criteria( is_criteria = is_selection_criteria ).
+
+  rt_data = me->gt_data.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_MODEL->GET_FIXED_NUMBER_OF_PALLET_LOC
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_MEANS_OF_SHIPPING           TYPE        ZTV_VC_SHPMH
+* | [<-()] RV_FIXED_NR                    TYPE        ZTV_VC_TRATY_NUM
+* | [!CX!] ZCX_MOT_CVC_REPORT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD get_fixed_number_of_pallet_loc.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  SELECT SINGLE traty_num
+    INTO rv_fixed_nr
+    FROM zorf_vc_shpmh " Fully buffered.
+    WHERE shpmh EQ iv_means_of_shipping.
+  IF syst-subrc NE 0.
+    RAISE EXCEPTION TYPE zcx_mot_cvc_report
+      EXPORTING
+        textid              = zcx_mot_cvc_report=>means_of_shipping_unknown
+        g_means_of_shipping = iv_means_of_shipping.
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_MODEL->GET_PALLET_ATTRIBUTES
+* +-------------------------------------------------------------------------------------------------+
+* | [<-()] RS_PALLET_ATTRIBUTES           TYPE        ZTS_VC_PALLET_ATTR
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD get_pallet_attributes.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  rs_pallet_attributes-vol_gross    = me->gw_pallet_type-vol_gross.
+  rs_pallet_attributes-vol_net      = me->gw_pallet_type-vol_net.
+  rs_pallet_attributes-uom          = me->gw_pallet_type-uom.
+  rs_pallet_attributes-full_pal_uom = me->gw_pallet_type-full_pal_uom.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_MOT_CVC_REPORT_MODEL->SET_CFN_NUMBERS
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD set_cfn_numbers.
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*&---------------------------------------------------------------------*
+
+  TYPES:
+    BEGIN OF ty_objek_nr,
+      objek TYPE objnum,
+      matnr TYPE matnr,
+    END OF ty_objek_nr.
+
+  CONSTANTS:
+    lc_atnam_product_nr TYPE atnam      VALUE 'PRODUCT_NUMBER',
+    lc_klart_material   TYPE klassenart VALUE '001',
+    lc_mafid_object     TYPE klmaf      VALUE 'O'.
+
+  DATA: lt_objek TYPE HASHED TABLE OF ty_objek_nr WITH UNIQUE KEY objek.
+
+
+  CLEAR me->gt_cfn_numbers.
+
+  CHECK me->gt_material_numbers IS NOT INITIAL.
+
+*-Get Internal number for characteristic:
+  SELECT atinn
+    FROM cabn UP TO 1 ROWS
+    INTO @DATA(l_atinn)
+    WHERE atnam EQ @lc_atnam_product_nr.
+  ENDSELECT.
+  IF l_atinn IS INITIAL.
+    RETURN.
+  ENDIF.
+
+  LOOP AT me->gt_material_numbers REFERENCE INTO DATA(lr_material_number).
+    INSERT VALUE ty_objek_nr( objek = CONV objnum( lr_material_number->* )
+                              matnr = lr_material_number->* ) INTO TABLE lt_objek.
+  ENDLOOP.
+
+  CHECK lt_objek IS NOT INITIAL.
+
+  SELECT objek,
+         atzhl,
+         adzhl,
+         atwrt
+    INTO TABLE @DATA(lt_char_value)
+    FROM ausp
+    FOR ALL ENTRIES IN @lt_objek
+    WHERE objek EQ @lt_objek-objek      AND
+          mafid EQ @lc_mafid_object     AND
+          klart EQ @lc_klart_material   AND
+          atinn EQ @l_atinn.
+  IF syst-subrc EQ 0.
+    SORT lt_char_value BY objek ASCENDING
+                          atzhl DESCENDING
+                          adzhl DESCENDING.
+
+    DELETE ADJACENT DUPLICATES FROM lt_char_value COMPARING objek.
+
+    LOOP AT lt_char_value REFERENCE INTO DATA(lr_char_value).
+      READ TABLE lt_objek REFERENCE INTO DATA(lr_objek) WITH TABLE KEY objek = lr_char_value->objek.
+      IF syst-subrc EQ 0.
+        INSERT VALUE zcl_mot_cvc_report_model=>ts_cfn_number( matnr = lr_objek->matnr
+                                                              cfnnr = lr_char_value->atwrt ) INTO TABLE me->gt_cfn_numbers.
+      ENDIF.
+    ENDLOOP.
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_MOT_CVC_REPORT_MODEL->SET_MATERIAL_DATA
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IT_DATA                        TYPE        ANY TABLE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD set_material_data.
+
+  FIELD-SYMBOLS: <ls_data>  TYPE any,
+                 <lv_matnr> TYPE matnr.
+
+  CLEAR me->gt_material_numbers.
+
+  LOOP AT it_data ASSIGNING <ls_data>.
+    ASSIGN COMPONENT 'MATNR' OF STRUCTURE <ls_data> TO <lv_matnr>.
+    IF syst-subrc EQ 0.
+      INSERT <lv_matnr> INTO TABLE me->gt_material_numbers.
+    ELSE.
+      EXIT.
+    ENDIF.
+  ENDLOOP.
+
+  CHECK me->gt_material_numbers IS NOT INITIAL.
+
+  SELECT marm~matnr
+         mara~meins
+         marm~meinh
+         marm~umren
+         marm~umrez
+    INTO TABLE me->gt_material_conversion
+    FROM marm
+    INNER JOIN mara ON mara~matnr EQ marm~matnr
+    FOR ALL ENTRIES IN me->gt_material_numbers
+    WHERE marm~matnr EQ me->gt_material_numbers-table_line.
+
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_MOT_CVC_REPORT_MODEL->SET_PALLET_TYPE
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_PALLET_TYPE                 TYPE        ZTV_VC_TRATY
+* | [!CX!] ZCX_MOT_CVC_REPORT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD set_pallet_type.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  CLEAR me->gw_pallet_type.
+
+  SELECT SINGLE *
+    INTO me->gw_pallet_type
+    FROM zorf_vc_traty
+    WHERE traty EQ iv_pallet_type.
+  IF syst-subrc NE 0.
+    RAISE EXCEPTION TYPE zcx_mot_cvc_report
+      EXPORTING
+        textid        = zcx_mot_cvc_report=>unknown_pallet_type
+        g_pallet_type = iv_pallet_type.
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_MOT_CVC_REPORT_MODEL->SET_UOM
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_WEIGHT_UOM                  TYPE        GEWEI
+* | [--->] IV_VOLUME_UOM                  TYPE        VOLEH
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD set_uom.
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*&---------------------------------------------------------------------*
+
+  me->gw_uom-weight = iv_weight_uom.
+  me->gw_uom-volume = iv_volume_uom.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_MOT_CVC_REPORT_MODEL=>_REVISION_LOG
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD _revision_log.
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / ECR201902195                              *
+*& Author        : Jos van Hinsberg                                    *
+*& Creation Date : 24-Oct-2019                                         *
+*& Description   : Simplification of the Volume calculation            *
+*& Transport No. : DR1K9B606J                                          *
+*& Change Tag    : ++ADD:HINSBJ1:24-Oct-2019:ECR201902195              *
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / ECR202003001 / TPR-23738                  *
+*& Author        : Vani Prasad Ravulapati                              *
+*& Creation Date : 16-Apr-2021                                         *
+*& Description   : Added selection field for delivery split group      *
+*& Transport No. : DR1K9B6O1Y                                          *
+*& Change Tag    : Begin ADD:RAVULV1:16-Apr-2021:ECR202003001:TPR-23738*
+*&                 End ADD:RAVULV1:16-Apr-2021:ECR202003001:TPR-23738  *
+*&---------------------------------------------------------------------*
+
+ENDMETHOD.
+ENDCLASS.
