@@ -1,1 +1,1485 @@
+class ZCL_MOT_CVC_REPORT_VIEW definition
+  public
+  final
+  create private .
 
+public section.
+  type-pools ICON .
+
+  interfaces ZIF_MOT_CVC_CALC_TYPE .
+  interfaces ZIF_MOT_CVC_FUNCTION_CODE .
+  interfaces ZIF_MOT_CVC_PF_STATUS .
+
+  constants:
+    BEGIN OF gc_report_id,
+        me      TYPE syrepid VALUE 'ZCL_MOT_CVC_REPORT_VIEW=======CP',
+        screens TYPE syrepid VALUE 'SAPLZORF1636_VC_SCREENS',
+      END OF gc_report_id .
+
+  events START_OF_SELECTION
+    exporting
+      value(IS_CRITERIA) type ANY .
+  events BTN_VOLUME_CALCULATION_CLICKED .
+  events BTN_EXEC_CALCULATION_CLICKED
+    exporting
+      value(IV_SHPMH) type ZTV_VC_SHPMH
+      value(IV_SHPMH_NUM) type ZTV_VC_NR_MEANS_OF_SHIP
+      value(IV_CALC_BASE) type ZTV_MOT_CVC_CALC_BASE .
+  events BTN_CREATE_SHIPMENT_CLICKED .
+  events BTN_EXEC_CREATE_SHIP_CLICKED
+    exporting
+      value(IV_TRANS_PLANNING_POINT) type TPLST
+      value(IV_SHIPMENT_TYPE) type SHTYP .
+  events HOTSPOT_SD_DOC_CLICKED
+    exporting
+      value(IV_SD_DOCUMENT) type VBELN
+      value(IV_CATEGORY) type VBTYP .
+  events HOTSPOT_SHIPMENT_CLICKED
+    exporting
+      value(IV_SHIPMENT) type TKNUM .
+  events HOTSPOT_PURCH_DOC_CLICKED
+    exporting
+      value(IV_PURCHASING_DOCUMENT) type EBELN .
+  events BTN_SHIPMENT_SIMULATE_CLICKED .
+  events BTN_ALIGN_ROUTES
+    exporting
+      value(IV_SELECTED_ROUTE) type ROUTE .
+
+  class-methods FACTORY
+    importing
+      !IR_DATA_REFERENCE type ref to ZTT_MOT_CVC_REPORT
+    returning
+      value(RO_MOT_CVC_REPORT_VIEW) type ref to ZCL_MOT_CVC_REPORT_VIEW .
+  class-methods CLASS_CONSTRUCTOR .
+  methods DISPLAY_SELECTION_SCREEN .
+  methods RETURN_TO_SELECTION_SCREEN .
+  methods RAISE_START_OF_SELECTION
+    importing
+      !IS_CRITERIA type ANY .
+  methods RAISE_EXEC_CALCULATION_CLICKED
+    importing
+      !IV_SHPMH type ZTV_VC_SHPMH
+      !IV_SHPMH_NUM type ZTV_VC_NR_MEANS_OF_SHIP
+      !IV_CALC_BASE type ZTV_MOT_CVC_CALC_BASE .
+  class-methods IS_AUTHORIZED_CUST_OBJ
+    importing
+      !IT_VKORG type ZTT_R_VKORG
+      !IT_VSTEL type ZTT_R_VSTEL
+      !IT_EKORG type ZTT_R_EKORG
+    returning
+      value(RV_AUTHORIZED) type ABAP_BOOL .
+  methods DISPLAY_OVERVIEW
+    importing
+      !IV_CALC_TYPE type ZTV_MOT_CVC_CALC_TYPE .
+  methods DISPLAY_CALCULATION_SCREEN .
+  methods SET_CALCULATION_RESULTS
+    importing
+      !IS_RESULT type ZCL_MOT_CVC_CALCULATOR=>TS_RESULT .
+  methods GET_SELECTED_ALV_LINES
+    returning
+      value(RT_LINES) type SALV_T_ROW .
+  methods DISPLAY_SHIPMENT_CREATE_SCREEN .
+  methods RAISE_EXEC_CREATE_SHIP_CLICKED
+    importing
+      !IV_TRANS_PLANNING_POINT type TPLST
+      !IV_SHIPMENT_TYPE type SHTYP .
+  methods SET_LAYOUT_VARIANT
+    importing
+      !IV_LAYOUT_VARIANT type SLIS_VARI .
+  methods LOAD_VARIANT .
+  methods DISPLAY_VARIANT_CATALOG .
+  methods SAVE_VARIANT
+    importing
+      !IV_NAME type RALDB_VARI
+      !IV_DESCRIPTION type RALDB_VTXT
+      !IT_PARAMETERS type RSPARAMS_TT .
+  methods DISPLAY_ROUTE_ALIGNMENT_SCREEN
+    importing
+      !IT_ROUTES type ZTT_ROUTE .
+  methods RAISE_ALIGN_ROUTES
+    importing
+      !IV_SELECTED_ROUTE type ROUTE .
+  methods DISPLAY_ROUTES_TO_SELECT
+    importing
+      !IT_ROUTES type ZTT_ROUTE .
+  methods CHECK_ROUTE_SELECTED
+    returning
+      value(RV_ROUTE) type ROUTE .
+protected section.
+private section.
+
+  types:
+    BEGIN OF ts_route,
+      route TYPE route,
+    END OF ts_route .
+  types:
+    BEGIN OF ts_routes_display,
+            radio TYPE char4,
+            route TYPE route,
+          END OF ts_routes_display .
+  types:
+    tt_routes_display TYPE STANDARD TABLE OF ts_routes_display INITIAL SIZE 0 .
+
+  data GO_ROUTES_ALV type ref to CL_SALV_TABLE .
+  class-data GO_ME type ref to ZCL_MOT_CVC_REPORT_VIEW .
+  data GR_DATA type ref to ZTT_MOT_CVC_REPORT .
+  data GO_ALV type ref to CL_SALV_TABLE .
+  data G_ALV_LAYOUT_VARIANT type SLIS_VARI .
+  data G_CALC_TYPE type ZTV_MOT_CVC_CALC_TYPE .
+  data:
+    BEGIN OF gw_sel_variant,
+      name TYPE raldb_vari,
+      text TYPE raldb_vtxt,
+    END OF gw_sel_variant .
+  data:
+    gt_routes TYPE STANDARD TABLE OF ts_route .
+  data GO_ALV_ROUTES type ref to CL_GUI_ALV_GRID .
+  data GT_ROUTES_DISPLAY type TT_ROUTES_DISPLAY .
+  data GO_CONT_ALV type ref to CL_GUI_CONTAINER .
+  data GO_CONT_TOP type ref to CL_GUI_CONTAINER .
+
+  methods SET_CALC_TYPE
+    importing
+      !IV_CALC_TYPE type ZTV_MOT_CVC_CALC_TYPE .
+  methods SET_ALV_COLUMN_ATTRIBUTES .
+  methods SET_ALV_FUNCTIONS .
+  methods SET_ALV_LAYOUT
+    importing
+      !IV_NEW type BOOLEAN_FLG default ABAP_FALSE .
+  methods SET_ALV_SELECTION_MODE .
+  methods SET_DATA_REFERENCE
+    importing
+      !IR_DATA_REFERENCE type ref to ZTT_MOT_CVC_REPORT .
+  methods INIT_ALV .
+  methods ON_USER_COMMAND
+    for event ADDED_FUNCTION of CL_SALV_EVENTS_TABLE
+    importing
+      !E_SALV_FUNCTION .
+  methods ON_LINK_CLICK
+    for event LINK_CLICK of CL_SALV_EVENTS_TABLE
+    importing
+      !ROW
+      !COLUMN .
+  methods ON_SELECT_ROUTE
+    for event HOTSPOT_CLICK of CL_GUI_ALV_GRID
+    importing
+      !E_ROW_ID .
+  methods BUILD_CONTAINERS .
+  methods BUILD_ROUTES_FIELDCATALOG
+    returning
+      value(RT_FIELDCAT) type LVC_T_FCAT .
+  methods BUILD_TOP_OF_PAGE
+    returning
+      value(RS_LAYOUT) type LVC_S_LAYO .
+  class-methods REVISION_LOG .
+ENDCLASS.
+
+
+
+CLASS ZCL_MOT_CVC_REPORT_VIEW IMPLEMENTATION.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_VIEW->BUILD_CONTAINERS
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD build_containers.
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+
+  DATA:
+    lo_cust_cont  TYPE REF TO cl_gui_custom_container,   " Container for Custom Controls in the Screen Area
+    lo_split_cont TYPE REF TO cl_gui_splitter_container. " Container for Custom Controls in the Screen Area
+
+  IF go_cont_alv IS NOT BOUND.
+
+*   Get the Custom container and Splitter references
+    lo_cust_cont  = NEW cl_gui_custom_container( 'GC_CONTAINER' ).
+    lo_split_cont = NEW cl_gui_splitter_container( parent = lo_cust_cont  rows = 2  columns = 1 ).
+
+*   Get the Top Of Page, ALV Header & ALV Grid Containers
+    go_cont_top = lo_split_cont->get_container( EXPORTING row = 1 column = 1 ).
+    go_cont_alv = lo_split_cont->get_container( EXPORTING row = 2 column = 1 ).
+
+*   Set height of ALV Header container
+    lo_split_cont->set_row_height(
+      EXPORTING
+        id                = 1
+        height            = 22
+      EXCEPTIONS
+        cntl_error        = 1
+        cntl_system_error = 2
+        OTHERS            = 3 ).
+
+  ENDIF.
+
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_VIEW->BUILD_ROUTES_FIELDCATALOG
+* +-------------------------------------------------------------------------------------------------+
+* | [<-()] RT_FIELDCAT                    TYPE        LVC_T_FCAT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD build_routes_fieldcatalog.
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+
+  CLEAR rt_fieldcat.
+
+  APPEND INITIAL LINE TO rt_fieldcat ASSIGNING FIELD-SYMBOL(<ls_fcat>).
+  <ls_fcat>-fieldname = 'RADIO'.
+  <ls_fcat>-ref_table = 'GT_ROUTES_DISPLAY'.
+  <ls_fcat>-icon = abap_true.
+  <ls_fcat>-edit = abap_true.
+  <ls_fcat>-hotspot = abap_true.
+  <ls_fcat>-col_pos = 1.
+  <ls_fcat>-outputlen = 5.
+  <ls_fcat>-scrtext_s = 'Select'.
+
+  APPEND INITIAL LINE TO rt_fieldcat ASSIGNING <ls_fcat>.
+  <ls_fcat>-fieldname = 'ROUTE'.
+  <ls_fcat>-ref_table = 'GT_ROUTES_DISPLAY'.
+  <ls_fcat>-col_pos = 2.
+  <ls_fcat>-outputlen = 10.
+  <ls_fcat>-scrtext_s = 'Route'.
+
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_VIEW->BUILD_TOP_OF_PAGE
+* +-------------------------------------------------------------------------------------------------+
+* | [<-()] RS_LAYOUT                      TYPE        LVC_S_LAYO
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD build_top_of_page.
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+
+  DATA : lv_text TYPE sdydo_text_element.
+
+  DATA(lo_document) = NEW cl_dd_document( ).
+
+* Add header text
+  lv_text = 'Shipment Creation'(001).
+
+  lo_document->add_text( text = lv_text
+                         sap_fontsize = cl_dd_document=>strong
+                         sap_emphasis = cl_dd_document=>strong ).
+
+  lo_document->new_line( ).
+
+* Add message for display
+  lv_text = 'Selected deliveries have different routes.'(002) && | | &&
+            'Please choose a route to align the deliveries and create shipment'(003) && | | &&
+            'or Cancel to abort the process'(004).
+
+  lo_document->add_text( text = lv_text ).
+
+*   Display document
+  lo_document->display_document(
+    EXPORTING
+      parent             = go_cont_top
+    EXCEPTIONS
+      html_display_error = 1
+      OTHERS             = 2 ).
+
+*   Calling the method of ALV to process top of page
+  go_alv_routes->list_processing_events(
+    EXPORTING
+      i_event_name = 'TOP_OF_PAGE'
+      i_dyndoc_id  = lo_document ).
+
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->CHECK_ROUTE_SELECTED
+* +-------------------------------------------------------------------------------------------------+
+* | [<-()] RV_ROUTE                       TYPE        ROUTE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD check_route_selected.
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+
+* Check if user selected any route, before clicking on Continue button
+  CLEAR rv_route.
+
+* Binary search not needed as this table will have very few entries
+  READ TABLE gt_routes_display REFERENCE INTO DATA(lr_route)
+       WITH KEY radio = icon_radiobutton.
+  IF sy-subrc EQ 0.
+    rv_route = lr_route->route.
+  ENDIF.
+
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_MOT_CVC_REPORT_VIEW=>CLASS_CONSTRUCTOR
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD class_constructor.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  CREATE OBJECT zcl_mot_cvc_report_view=>go_me.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->DISPLAY_CALCULATION_SCREEN
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD display_calculation_screen.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  CALL FUNCTION 'Z_ORF1636_VC_DISPLAY_CALC_SCRN'.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->DISPLAY_OVERVIEW
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_CALC_TYPE                   TYPE        ZTV_MOT_CVC_CALC_TYPE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD display_overview.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  me->set_calc_type( iv_calc_type = iv_calc_type ).
+
+  IF me->go_alv IS NOT BOUND.
+    me->init_alv( ).
+
+    me->go_alv->display( ).
+  ELSE.
+    me->set_alv_layout( ).
+
+    me->set_alv_functions( ).
+
+    me->go_alv->refresh( ).
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->DISPLAY_ROUTES_TO_SELECT
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IT_ROUTES                      TYPE        ZTT_ROUTE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD display_routes_to_select.
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+
+  DATA : ls_layout TYPE lvc_s_layo.
+
+  CLEAR : gt_routes_display.
+
+** Build the data for display
+  LOOP AT it_routes REFERENCE INTO DATA(lr_route).
+    APPEND INITIAL LINE TO gt_routes_display REFERENCE INTO DATA(lr_route_display).
+    lr_route_display->route = lr_route->*.
+    lr_route_display->radio = icon_wd_radio_button_empty.
+  ENDLOOP.
+
+** Build containers to display the data and header information
+  build_containers( ).
+
+  IF go_cont_alv IS BOUND AND go_alv_routes IS NOT BOUND.
+
+    go_alv_routes = NEW #( i_parent = go_cont_alv ).
+
+** Build the field catalog for display
+    DATA(lt_fieldcat) = build_routes_fieldcatalog( ).
+
+    ls_layout-no_toolbar = abap_true.
+    ls_layout-no_rowmark = abap_true.
+
+** Set event handler for handling route selection by the user
+    SET HANDLER on_select_route FOR go_alv_routes.
+
+** Set the data for display
+    CALL METHOD go_alv_routes->set_table_for_first_display
+      EXPORTING
+        is_layout                     = ls_layout
+      CHANGING
+        it_outtab                     = gt_routes_display
+        it_fieldcatalog               = lt_fieldcat
+      EXCEPTIONS
+        invalid_parameter_combination = 1
+        program_error                 = 2
+        too_many_lines                = 3
+        OTHERS                        = 4.
+    IF sy-subrc <> 0.
+*     Implement suitable error handling here
+    ENDIF.
+
+** Build top of page information for user
+    build_top_of_page( ).
+
+  ELSE.
+    go_alv_routes->refresh_table_display( ).
+  ENDIF.
+
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->DISPLAY_ROUTE_ALIGNMENT_SCREEN
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IT_ROUTES                      TYPE        ZTT_ROUTE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD display_route_alignment_screen.
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+
+  CALL FUNCTION 'Z_ORF1636_VC_DISPLAY_ROUTES'
+    EXPORTING
+      io_view   = me
+      it_routes = it_routes.
+
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->DISPLAY_SELECTION_SCREEN
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD display_selection_screen.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  CALL FUNCTION 'Z_ORF1636_VC_DISPLAY_SEL_SCRN'
+    EXPORTING
+      io_view = me.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->DISPLAY_SHIPMENT_CREATE_SCREEN
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD display_shipment_create_screen.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  CALL FUNCTION 'Z_ORF1636_VC_DISPLAY_SHCR_SCRN'.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->DISPLAY_VARIANT_CATALOG
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD display_variant_catalog.
+
+  clear me->gw_sel_variant.
+
+  CALL FUNCTION 'RS_VARIANT_CATALOG'
+    EXPORTING
+      report               = zcl_mot_cvc_report_view=>gc_report_id-screens
+      masked               = 'X'
+    IMPORTING
+      sel_variant          = me->gw_sel_variant-name
+      sel_variant_text     = me->gw_sel_variant-text
+    EXCEPTIONS
+      no_report            = 1
+      report_not_existent  = 2
+      report_not_supplied  = 3
+      no_variants          = 4
+      no_variant_selected  = 5
+      variant_not_existent = 6
+      OTHERS               = 7.
+  CASE syst-subrc.
+    WHEN 4.
+      MESSAGE i038 .
+  ENDCASE.
+
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_MOT_CVC_REPORT_VIEW=>FACTORY
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IR_DATA_REFERENCE              TYPE REF TO ZTT_MOT_CVC_REPORT
+* | [<-()] RO_MOT_CVC_REPORT_VIEW         TYPE REF TO ZCL_MOT_CVC_REPORT_VIEW
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD factory.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  zcl_mot_cvc_report_view=>go_me->set_data_reference( ir_data_reference ).
+
+  ro_mot_cvc_report_view = zcl_mot_cvc_report_view=>go_me.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->GET_SELECTED_ALV_LINES
+* +-------------------------------------------------------------------------------------------------+
+* | [<-()] RT_LINES                       TYPE        SALV_T_ROW
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD get_selected_alv_lines.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  rt_lines = me->go_alv->get_selections( )->get_selected_rows( ).
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_VIEW->INIT_ALV
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD init_alv.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  DATA: lw_key    TYPE salv_s_layout_key,
+        lo_events TYPE REF TO cl_salv_events_table.
+
+  TRY.
+      cl_salv_table=>factory(
+        IMPORTING
+          r_salv_table = me->go_alv
+        CHANGING
+          t_table      = me->gr_data->* ).
+
+
+      me->go_alv->set_screen_status( pfstatus      = zcl_mot_cvc_report_view=>zif_mot_cvc_pf_status~gc_alv
+                                     report        = zcl_mot_cvc_report_view=>gc_report_id-screens
+                                     set_functions = me->go_alv->c_functions_all ).
+
+
+      lo_events = me->go_alv->get_event( ).
+
+      SET HANDLER: me->on_user_command FOR lo_events,
+                   me->on_link_click   FOR lo_events.
+
+      me->set_alv_functions( ).
+      me->set_alv_selection_mode( ).
+      me->set_alv_column_attributes( ).
+      me->set_alv_layout( iv_new = abap_true ).
+
+    CATCH cx_salv_msg.
+  ENDTRY.
+
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_MOT_CVC_REPORT_VIEW=>IS_AUTHORIZED_CUST_OBJ
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IT_VKORG                       TYPE        ZTT_R_VKORG
+* | [--->] IT_VSTEL                       TYPE        ZTT_R_VSTEL
+* | [--->] IT_EKORG                       TYPE        ZTT_R_EKORG
+* | [<-()] RV_AUTHORIZED                  TYPE        ABAP_BOOL
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD is_authorized_cust_obj.
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan                                     *
+*& Creation Date : 12-Feb-2016                                         *
+*& Description   : New (standard) Medtronic check added                *
+*& Transport No. : DR1K9B37F9                                          *
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*& Change Tag    : -                                                   *
+*&---------------------------------------------------------------------*
+
+  CONSTANTS:
+    lc_object TYPE xuobject VALUE 'Z_CUST_OBJ',
+    lc_vkorg  TYPE xufield  VALUE 'VKORG',
+    lc_vstel  TYPE xufield  VALUE 'VSTEL',
+    lc_ekorg  TYPE xufield  VALUE 'EKORG'.
+
+  DATA:
+    l_vkorg TYPE xuval,
+    l_vstel TYPE xuval,
+    l_ekorg TYPE xuval.
+
+*-- Check on custom object for sales organization field
+  IF lines( it_vkorg ) GT 0.
+
+    SELECT vkorg INTO TABLE @DATA(lt_vkorg) FROM tvko WHERE vkorg IN @it_vkorg.
+
+    IF lines( lt_vkorg ) EQ 0.
+      READ TABLE it_vkorg REFERENCE INTO DATA(lr_vkorgssc) INDEX 1.
+      MESSAGE e017(zorf_mot_cvc) WITH lr_vkorgssc->low.
+    ELSE.
+      LOOP AT lt_vkorg REFERENCE INTO DATA(lr_vkorg).
+        l_vkorg = lr_vkorg->vkorg.
+        CALL FUNCTION 'AUTHORITY_CHECK'
+          EXPORTING
+            user                = sy-uname
+            object              = lc_object
+            field1              = lc_vkorg
+            value1              = l_vkorg
+          EXCEPTIONS
+            user_dont_exist     = 1
+            user_is_authorized  = 2
+            user_not_authorized = 3
+            user_is_locked      = 4
+            OTHERS              = 5.
+        IF sy-subrc EQ 3.
+          MESSAGE e018(zorf_mot_cvc) WITH l_vkorg.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+
+  ENDIF.
+
+*-- Check on custom object for shipping point field
+  IF lines( it_vstel ) GT 0.
+
+    SELECT vstel INTO TABLE @DATA(lt_vstel) FROM tvst WHERE vstel IN @it_vstel.
+
+    IF lines( lt_vstel ) EQ 0.
+      READ TABLE it_vstel REFERENCE INTO DATA(lr_vstelssc) INDEX 1.
+      MESSAGE e019(zorf_mot_cvc) WITH lr_vstelssc->low.
+    ELSE.
+      LOOP AT lt_vstel REFERENCE INTO DATA(lr_vstel).
+        l_vstel = lr_vstel->vstel.
+        CALL FUNCTION 'AUTHORITY_CHECK'
+          EXPORTING
+            user                = sy-uname
+            object              = lc_object
+            field1              = lc_vstel
+            value1              = l_vstel
+          EXCEPTIONS
+            user_dont_exist     = 1
+            user_is_authorized  = 2
+            user_not_authorized = 3
+            user_is_locked      = 4
+            OTHERS              = 5.
+        IF sy-subrc EQ 3.
+          MESSAGE e020(zorf_mot_cvc) WITH l_vstel.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+
+  ENDIF.
+
+*-- Check on custom object for pruchase organization field
+  IF lines( it_ekorg ) GT 0.
+
+    SELECT ekorg INTO TABLE @DATA(lt_ekorg) FROM t024e WHERE ekorg IN @it_ekorg.
+
+    IF lines( lt_ekorg ) EQ 0.
+      READ TABLE it_ekorg REFERENCE INTO DATA(lr_ekorgssc) INDEX 1.
+      MESSAGE e041(zorf_mot_cvc) WITH lr_ekorgssc->low.
+    ELSE.
+      LOOP AT lt_ekorg REFERENCE INTO DATA(lr_ekorg).
+        l_ekorg = lr_ekorg->ekorg.
+        CALL FUNCTION 'AUTHORITY_CHECK'
+          EXPORTING
+            user                = sy-uname
+            object              = lc_object
+            field1              = lc_ekorg
+            value1              = l_ekorg
+          EXCEPTIONS
+            user_dont_exist     = 1
+            user_is_authorized  = 2
+            user_not_authorized = 3
+            user_is_locked      = 4
+            OTHERS              = 5.
+        IF sy-subrc EQ 3.
+          MESSAGE e042(zorf_mot_cvc) WITH l_ekorg.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+
+  ENDIF.
+
+  rv_authorized = abap_true.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->LOAD_VARIANT
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD load_variant.
+
+  CHECK me->gw_sel_variant-name IS NOT INITIAL. "Variant was selected
+
+  CALL FUNCTION 'RS_SUPPORT_SELECTIONS'
+    EXPORTING
+      report               = me->gc_report_id-screens
+      variant              = me->gw_sel_variant-name
+    EXCEPTIONS
+      variant_not_existent = 1
+      variant_obsolete     = 2
+      OTHERS               = 3.
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+  IF sy-subrc IS NOT INITIAL.
+    MESSAGE i999(zorf) WITH 'Error loading the variant'(m01) INTO DATA(lv_dummy).
+  ENDIF.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_VIEW->ON_LINK_CLICK
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] ROW                            LIKE
+* | [--->] COLUMN                         LIKE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD on_link_click.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*& Change Tag    : -                                                   *
+*&---------------------------------------------------------------------*
+
+  READ TABLE me->gr_data->* REFERENCE INTO DATA(lr_data) INDEX row.
+  IF syst-subrc EQ 0.
+    CASE column.
+      WHEN 'VBELN'.
+        RAISE EVENT hotspot_sd_doc_clicked
+          EXPORTING
+            iv_sd_document    = lr_data->vbeln
+            iv_category       = lr_data->vbtyp.
+      WHEN 'TKNUM'.
+        RAISE EVENT hotspot_shipment_clicked
+          EXPORTING
+            iv_shipment = lr_data->tknum.
+      WHEN 'EBELN'.
+        RAISE EVENT hotspot_purch_doc_clicked
+          EXPORTING
+            iv_purchasing_document = lr_data->ebeln.
+    ENDCASE.
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_VIEW->ON_SELECT_ROUTE
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] E_ROW_ID                       LIKE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD on_select_route.
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+
+* Check if any route is already selected
+  READ TABLE gt_routes_display REFERENCE INTO DATA(lr_route_display)
+       WITH KEY radio = icon_radiobutton.
+  IF sy-subrc NE 0.
+* First selection, update radio button icon for user selection
+    READ TABLE gt_routes_display REFERENCE INTO lr_route_display INDEX e_row_id.
+    IF sy-subrc EQ 0.
+      lr_route_display->radio = icon_radiobutton.
+    ENDIF.
+  ELSE.
+* Clear previous selection and update new selection
+    lr_route_display->radio = icon_wd_radio_button_empty.
+
+    READ TABLE gt_routes_display REFERENCE INTO lr_route_display INDEX e_row_id.
+    IF sy-subrc EQ 0.
+      lr_route_display->radio = icon_radiobutton.
+    ENDIF.
+  ENDIF.
+
+* Refresh table display for updated selection
+  go_alv_routes->refresh_table_display( ).
+
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_VIEW->ON_USER_COMMAND
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] E_SALV_FUNCTION                LIKE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD on_user_command.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / ECR201902596                              *
+*& Author        : Vani Prasad Ravulapati                              *
+*& Creation Date : 18-Mar-2020                                         *
+*& Description   : Shipment Simulation button                          *
+*& Transport No. : DR1K9B67ZN                                          *
+*& Change Tag    : Begin ADD:RAVULV1:18-Mar-2020:ECR201902596          *
+*&                 End ADD:RAVULV1:18-Mar-2020:ECR201902596            *
+*&---------------------------------------------------------------------*
+  CASE e_salv_function.
+    WHEN zcl_mot_cvc_report_view=>zif_mot_cvc_function_code~gc_volume_calculation.
+      RAISE EVENT btn_volume_calculation_clicked.
+    WHEN zcl_mot_cvc_report_view=>zif_mot_cvc_function_code~gc_create_shipment.
+      RAISE EVENT btn_create_shipment_clicked.
+* Begin ADD:RAVULV1:18-Mar-2020:ECR201902596
+    WHEN zcl_mot_cvc_report_view=>zif_mot_cvc_function_code~gc_shipment_simulate.
+      RAISE EVENT btn_shipment_simulate_clicked.
+* End ADD:RAVULV1:18-Mar-2020:ECR201902596
+  ENDCASE.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->RAISE_ALIGN_ROUTES
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_SELECTED_ROUTE              TYPE        ROUTE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD raise_align_routes.
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+
+* Raise event to align routes on the delivery
+  RAISE EVENT btn_align_routes
+    EXPORTING
+      iv_selected_route = iv_selected_route.
+
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->RAISE_EXEC_CALCULATION_CLICKED
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_SHPMH                       TYPE        ZTV_VC_SHPMH
+* | [--->] IV_SHPMH_NUM                   TYPE        ZTV_VC_NR_MEANS_OF_SHIP
+* | [--->] IV_CALC_BASE                   TYPE        ZTV_MOT_CVC_CALC_BASE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD raise_exec_calculation_clicked.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*& Change Tag    : -                                                   *
+*&---------------------------------------------------------------------*
+
+  RAISE EVENT btn_exec_calculation_clicked
+    EXPORTING
+      iv_shpmh     = iv_shpmh
+      iv_shpmh_num = iv_shpmh_num
+      iv_calc_base = iv_calc_base.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->RAISE_EXEC_CREATE_SHIP_CLICKED
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_TRANS_PLANNING_POINT        TYPE        TPLST
+* | [--->] IV_SHIPMENT_TYPE               TYPE        SHTYP
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD raise_exec_create_ship_clicked.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  RAISE EVENT btn_exec_create_ship_clicked
+    EXPORTING
+      iv_trans_planning_point = iv_trans_planning_point
+      iv_shipment_type        = iv_shipment_type.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->RAISE_START_OF_SELECTION
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IS_CRITERIA                    TYPE        ANY
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD raise_start_of_selection.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  RAISE EVENT start_of_selection
+    EXPORTING
+      is_criteria = is_criteria.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->RETURN_TO_SELECTION_SCREEN
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD RETURN_TO_SELECTION_SCREEN.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*& Change Tag    : -                                                   *
+*&---------------------------------------------------------------------*
+
+  CALL FUNCTION 'Z_ORF1636_VC_DISPLAY_SEL_SCRN'.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Private Method ZCL_MOT_CVC_REPORT_VIEW=>REVISION_LOG
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD revision_log.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / ECR202002578                              *
+*& Author        : Vani Prasad Ravulapati                              *
+*& Creation Date : 16-Feb-2021                                         *
+*& Description   : DGMS R3 changes - Triangle matrix changes, Y2       *
+*&                 nesting changes and Route alignment changes         *
+*& Transport No. : DR1K9B6LZ1                                          *
+*& Change Tag    : Begin ADD:RAVULV1:16-Feb-2021:ECR202002578          *
+*&                 End ADD:RAVULV1:16-Feb-2021:ECR202002578            *
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / ECR251958033                              *
+*& Author        : Vani Prasad Ravulapati                              *
+*& Creation Date : 26-Oct-2021                                         *
+*& Description   : Changes for shipment simulate and DG checks on      *
+*&                 create shipment for order type addition on the table*
+*&                 ZORF_DG_MATRIX                                      *
+*& Transport No. : DR1K9B6VAA                                          *
+*& Change Tag    : Begin ADD:RAVULV1:26-Oct-2021:ECR251958033          *
+*&                 End ADD:RAVULV1:26-Oct-2021:ECR251958033            *
+*&---------------------------------------------------------------------*
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->SAVE_VARIANT
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_NAME                        TYPE        RALDB_VARI
+* | [--->] IV_DESCRIPTION                 TYPE        RALDB_VTXT
+* | [--->] IT_PARAMETERS                  TYPE        RSPARAMS_TT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD save_variant.
+
+  DATA: l_rc     TYPE syst-subrc,
+        lw_varid TYPE varid,
+        lt_varit TYPE STANDARD TABLE OF varit.
+
+  lw_varid-report  = zcl_mot_cvc_report_view=>gc_report_id-screens.
+  lw_varid-variant = iv_name.
+  lw_varid-environmnt   = 'A'.
+
+  APPEND INITIAL LINE TO lt_varit REFERENCE INTO DATA(lr_varit).
+  lr_varit->mandt   = sy-mandt.
+  lr_varit->langu   = sy-langu.
+  lr_varit->report  = lw_varid-report.
+  lr_varit->variant = lw_varid-variant.
+  lr_varit->vtext   = iv_description.
+
+
+  CALL FUNCTION 'RS_VARIANT_EXISTS'
+    EXPORTING
+      report              = lw_varid-report
+      variant             = lw_varid-variant
+    IMPORTING
+      r_c                 = l_rc
+    EXCEPTIONS
+      not_authorized      = 01
+      no_report           = 02
+      report_not_existent = 03
+      report_not_supplied = 04.
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+  IF sy-subrc IS NOT INITIAL.
+    MESSAGE i999(zorf) WITH 'Error loading the variant'(m01) INTO DATA(lv_dummy).
+  ENDIF.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+
+  IF l_rc EQ 0.                    " Variante existiert
+    CALL FUNCTION 'RS_CHANGE_CREATED_VARIANT'
+      EXPORTING
+        curr_report               = lw_varid-report
+        curr_variant              = lw_varid-variant
+        vari_desc                 = lw_varid
+      TABLES
+        vari_contents             = it_parameters
+        vari_text                 = lt_varit
+      EXCEPTIONS
+        illegal_report_or_variant = 01
+        illegal_variantname       = 02
+        not_authorized            = 03
+        not_executed              = 04
+        report_not_existent       = 05
+        report_not_supplied       = 06
+        variant_doesnt_exist      = 07
+        variant_locked            = 08
+        selections_no_match       = 09.
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+    IF sy-subrc IS NOT INITIAL.
+      MESSAGE i999(zorf) WITH 'Error loading the variant'(m01) INTO lv_dummy.
+    ENDIF.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+  ELSE.
+    CALL FUNCTION 'RS_CREATE_VARIANT'
+      EXPORTING
+        curr_report               = lw_varid-report
+        curr_variant              = lw_varid-variant
+        vari_desc                 = lw_varid
+      TABLES
+        vari_contents             = it_parameters
+        vari_text                 = lt_varit
+      EXCEPTIONS
+        illegal_report_or_variant = 01
+        illegal_variantname       = 02
+        not_authorized            = 03
+        not_executed              = 04
+        report_not_existent       = 05
+        report_not_supplied       = 06
+        variant_exists            = 07
+        variant_locked            = 08.
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+    IF sy-subrc IS NOT INITIAL.
+      MESSAGE i999(zorf) WITH 'Error loading the variant'(m01) INTO lv_dummy.
+    ENDIF.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_VIEW->SET_ALV_COLUMN_ATTRIBUTES
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD set_alv_column_attributes.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*& Change Tag    : -                                                   *
+*&---------------------------------------------------------------------*
+
+  DATA: lw_color          TYPE lvc_s_colo,
+        lo_columns        TYPE REF TO cl_salv_columns_table,
+        lo_column         TYPE REF TO cl_salv_column_table,
+        ls_ddic_reference TYPE salv_s_ddic_reference.
+
+  lo_columns = me->go_alv->get_columns( ).
+
+  TRY.
+      CASE me->g_calc_type.
+        WHEN zcl_mot_cvc_report_view=>zif_mot_cvc_calc_type~order OR
+             zcl_mot_cvc_report_view=>zif_mot_cvc_calc_type~delivery.
+
+*---------Set Key columns-------------------------------------------*
+          lo_column ?= lo_columns->get_column( 'VBELN' ).
+          lo_column->set_cell_type( if_salv_c_cell_type=>hotspot ).
+
+          lw_color-col = col_key.
+          lo_column->set_color( lw_color ).
+
+          lo_column ?= lo_columns->get_column( 'POSNR' ).
+          lo_column->set_color( lw_color ).
+
+          lo_column ?= lo_columns->get_column( 'TKNUM' ).
+          lo_column->set_cell_type( if_salv_c_cell_type=>hotspot ).
+
+*---------Hide non relevant columns----------------------------------*
+          lo_column ?= lo_columns->get_column( 'EBELN' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'EBELP' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'EKORG' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'LIFNR' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'RESWK' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'ELDAT' ). lo_column->set_visible( value = abap_false ).
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+          lo_column ?= lo_columns->get_column( 'VGTYP' ). lo_column->set_visible( value = abap_false ).
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+
+* Begin ADD:RAVULV1:16-Apr-2021:ECR202003001:TPR-23738
+          IF me->g_calc_type EQ zcl_mot_cvc_report_view=>zif_mot_cvc_calc_type~order.
+            lo_column ?= lo_columns->get_column( 'DEL_SPLIT_GROUP' ). lo_column->set_visible( value = abap_false ).
+          ELSE.
+            lo_column ?= lo_columns->get_column( 'DEL_SPLIT_GROUP' ).
+            ls_ddic_reference-table = 'ZORF_SPLIT_DET'.
+            ls_ddic_reference-field = 'DEL_GROUP'.
+            lo_column->set_ddic_reference( ls_ddic_reference ).
+            lo_column->set_f4( abap_true ).
+            lo_column->set_short_text( 'Group ID' ).
+            lo_column->set_medium_text( 'Lane Group ID' ).
+            lo_column->set_long_text( 'Lane Delivery Group ID' ).
+          ENDIF.
+* End ADD:RAVULV1:16-Apr-2021:ECR202003001:TPR-23738
+
+        WHEN zcl_mot_cvc_report_view=>zif_mot_cvc_calc_type~sto.
+
+*---------Set Key columns-------------------------------------------*
+          lo_column ?= lo_columns->get_column( 'EBELN' ).
+          lo_column->set_cell_type( if_salv_c_cell_type=>hotspot ).
+
+          lw_color-col = col_key.
+          lo_column->set_color( lw_color ).
+
+          lo_column ?= lo_columns->get_column( 'EBELP' ).
+          lo_column->set_color( lw_color ).
+
+*---------Hide non relevant columns----------------------------------*
+          lo_column ?= lo_columns->get_column( 'VBELN' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'POSNR' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'VGBEL' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'VGPOS' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'VBTYP' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'TKNUM' ). lo_column->set_visible( value = abap_false ).
+
+
+          lo_column ?= lo_columns->get_column( 'TRATY' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'PSTYV' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'TRAID' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'LPRIO' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'LIFSK' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'ERZET' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'ABGRU' ). lo_column->set_visible( value = abap_false ).
+          lo_column ?= lo_columns->get_column( 'BSTKD' ). lo_column->set_visible( value = abap_false ).
+* Begin ADD:RAVULV1:16-Apr-2021:ECR202003001:TPR-23738
+          lo_column ?= lo_columns->get_column( 'DEL_SPLIT_GROUP' ). lo_column->set_visible( value = abap_false ).
+* End ADD:RAVULV1:16-Apr-2021:ECR202003001:TPR-23738
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+          lo_column ?= lo_columns->get_column( 'VGTYP' ). lo_column->set_visible( value = abap_false ).
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+      ENDCASE.
+    CATCH cx_salv_not_found.                            "#EC NO_HANDLER
+      MESSAGE 'Unkown column' TYPE 'E'.
+  ENDTRY.
+
+
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_VIEW->SET_ALV_FUNCTIONS
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD set_alv_functions.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*& Change Tag    : Begin ADD:ZWAANJ1:15-Jun-2016:ECR107519:INC0270439  *
+*&                 End   ADD:ZWAANJ1:15-Jun-2016:ECR107519:INC0270439  *
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / ECR201902596                              *
+*& Author        : Vani Prasad Ravulapati                              *
+*& Creation Date : 18-Mar-2020                                         *
+*& Description   : Shipment Simulation button - enable/disable         *
+*& Transport No. : DR1K9B67ZN                                          *
+*& Change Tag    : Begin ADD:RAVULV1:18-Mar-2020:ECR201902596          *
+*&                 End ADD:RAVULV1:18-Mar-2020:ECR201902596            *
+*&---------------------------------------------------------------------*
+  DATA lo_functions TYPE REF TO cl_salv_functions_list.
+
+  lo_functions = me->go_alv->get_functions( ).
+  lo_functions->set_default( abap_true ).
+  lo_functions->set_export_localfile( abap_true ).
+  lo_functions->set_export_spreadsheet( abap_true ).
+
+  TRY.
+      CASE me->g_calc_type.
+        WHEN zcl_mot_cvc_report_view=>zif_mot_cvc_calc_type~order OR
+             zcl_mot_cvc_report_view=>zif_mot_cvc_calc_type~sto.
+
+          lo_functions->set_function( name    = zcl_mot_cvc_report_view=>zif_mot_cvc_function_code~gc_create_shipment
+                                      boolean = abap_false ).
+* Begin ADD:RAVULV1:18-Mar-2020:ECR201902596
+          lo_functions->set_function( name    = zcl_mot_cvc_report_view=>zif_mot_cvc_function_code~gc_shipment_simulate
+                                      boolean = abap_false ).
+* End ADD:RAVULV1:18-Mar-2020:ECR201902596
+        WHEN zcl_mot_cvc_report_view=>zif_mot_cvc_calc_type~delivery.
+          lo_functions->set_function( name    = zcl_mot_cvc_report_view=>zif_mot_cvc_function_code~gc_create_shipment
+                                      boolean = abap_true ).
+* Begin ADD:RAVULV1:18-Mar-2020:ECR201902596
+          lo_functions->set_function( name    = zcl_mot_cvc_report_view=>zif_mot_cvc_function_code~gc_shipment_simulate
+                                      boolean = abap_true ).
+* End ADD:RAVULV1:18-Mar-2020:ECR201902596
+      ENDCASE.
+    CATCH: cx_salv_not_found,
+           cx_salv_wrong_call.
+
+  ENDTRY.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_VIEW->SET_ALV_LAYOUT
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_NEW                         TYPE        BOOLEAN_FLG (default =ABAP_FALSE)
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD set_alv_layout.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  DATA: lw_key    TYPE salv_s_layout_key,
+        lo_layout TYPE REF TO cl_salv_layout.
+
+  lo_layout = me->go_alv->get_layout( ).
+
+  IF iv_new EQ abap_true.
+    lw_key-report = zcl_mot_cvc_report_view=>gc_report_id-me .
+    lo_layout->set_key( lw_key ).
+
+    lo_layout->set_default( abap_true ).
+
+    lo_layout->set_save_restriction( if_salv_c_layout=>restrict_none ).
+  ENDIF.
+
+  IF me->g_alv_layout_variant IS NOT INITIAL.
+    lo_layout->set_initial_layout( me->g_alv_layout_variant ).
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_VIEW->SET_ALV_SELECTION_MODE
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD set_alv_selection_mode.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  DATA lo_selections TYPE REF TO cl_salv_selections.
+
+  lo_selections = me->go_alv->get_selections( ).
+  lo_selections->set_selection_mode( if_salv_c_selection_mode=>multiple ).
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->SET_CALCULATION_RESULTS
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IS_RESULT                      TYPE        ZCL_MOT_CVC_CALCULATOR=>TS_RESULT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD set_calculation_results.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  CALL FUNCTION 'Z_ORF1636_VC_SET_CALC_RESULTS'
+    EXPORTING
+      is_calc_result = is_result.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_VIEW->SET_CALC_TYPE
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_CALC_TYPE                   TYPE        ZTV_MOT_CVC_CALC_TYPE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD set_calc_type.
+
+  IF me->g_calc_type IS NOT INITIAL.
+    CASE iv_calc_type.
+      WHEN zcl_mot_cvc_report_view=>zif_mot_cvc_calc_type~order OR
+           zcl_mot_cvc_report_view=>zif_mot_cvc_calc_type~delivery.
+
+        IF me->g_calc_type EQ zcl_mot_cvc_report_view=>zif_mot_cvc_calc_type~sto.
+*-        New scenario; "Destroy" alv
+          CLEAR me->go_alv.
+        ENDIF.
+      WHEN zcl_mot_cvc_report_view=>zif_mot_cvc_calc_type~sto.
+        IF me->g_calc_type NE zcl_mot_cvc_report_view=>zif_mot_cvc_calc_type~sto.
+*-        New scenario; "Destroy" alv
+          CLEAR me->go_alv.
+        ENDIF.
+    ENDCASE.
+  ENDIF.
+
+  me->g_calc_type = iv_calc_type.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_VIEW->SET_DATA_REFERENCE
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IR_DATA_REFERENCE              TYPE REF TO ZTT_MOT_CVC_REPORT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD set_data_reference.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  me->gr_data = ir_data_reference.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_VIEW->SET_LAYOUT_VARIANT
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_LAYOUT_VARIANT              TYPE        SLIS_VARI
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD set_layout_variant.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+
+  IF iv_layout_variant IS INITIAL AND me->g_alv_layout_variant IS NOT INITIAL.
+    CLEAR me->go_alv. "Re-initilize ALV object
+  ENDIF.
+
+  me->g_alv_layout_variant = iv_layout_variant.
+
+ENDMETHOD.
+ENDCLASS.
