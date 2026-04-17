@@ -1,0 +1,3392 @@
+class ZCL_MOT_CVC_REPORT_CNTRL definition
+  public
+  final
+  create public .
+
+public section.
+
+  interfaces ZIF_MOT_CVC_CALC_TYPE .
+  interfaces ZIF_MOT_CVC_CALC_BASE .
+
+  methods RUN .
+  methods CONSTRUCTOR .
+protected section.
+private section.
+
+  types:
+    BEGIN OF ts_check_values,
+      kunwe TYPE kunwe,
+      zterm TYPE dzterm,
+      vsbed TYPE vsbed,
+      route TYPE route,
+      inco1 TYPE inco1,
+      inco2 TYPE inco2,
+    END   OF ts_check_values .
+  types:
+    BEGIN OF ts_check_valuesx,
+      kunwe TYPE xfeld,
+      zterm TYPE xfeld,
+      vsbed TYPE xfeld,
+      route TYPE xfeld,
+      inco1 TYPE xfeld,
+      inco2 TYPE xfeld,
+    END   OF ts_check_valuesx .
+  types:
+    tt_deliveries TYPE SORTED TABLE OF vbeln_vl WITH UNIQUE DEFAULT KEY .
+  types:
+    BEGIN OF ts_delivery_data,
+      vbeln TYPE vbeln,
+      kunwe TYPE kunwe,
+      vsbed TYPE vsbed,
+      route TYPE route,
+      inco1 TYPE inco1,
+      inco2 TYPE inco2,
+      zterm TYPE dzterm,
+    END   OF ts_delivery_data .
+  types:
+    BEGIN OF ts_sales_order_info,
+      vbeln TYPE vbeln_va,
+      zterm TYPE dzterm,
+    END   OF ts_sales_order_info .
+  types:
+    tt_sales_order_info TYPE HASHED TABLE OF ts_sales_order_info
+                             WITH UNIQUE KEY vbeln .
+  types:
+* Begin ADD:RAVULV1:18-Mar-2020:ECR201902596
+    BEGIN OF ts_delivery_info,
+      vbeln  TYPE vbeln_vl,
+      route  TYPE route,
+      contdg TYPE adge_ncdg,
+      lwdg   TYPE thme_lwdg,
+      dggrp  TYPE adge_profl, " ++TPR-22182
+      dgrel  TYPE zde_dg_trans,
+    END OF ts_delivery_info .
+  types:
+    tt_delivery_info TYPE SORTED TABLE OF ts_delivery_info
+                          WITH UNIQUE KEY vbeln .
+  types:
+    tt_r_profl TYPE RANGE OF adge_profl .
+  types:
+    BEGIN OF ts_dg_delivery,
+      dg_packing_group TYPE /sctech/dg_packing_group,
+* Begin ADD:RAVULV1:29-Jul-2020:ECR201902596:TPR-22182
+      combi            TYPE flag,
+      threshold        TYPE flag,
+      deliveries       TYPE tt_delivery_info,
+      profl            TYPE tt_r_profl,        "++ADD:RAVULV1:16-Feb-2021:ECR202002577
+* End ADD:RAVULV1:29-Jul-2020:ECR201902596:TPR-22182
+    END   OF ts_dg_delivery .
+  types:
+    tt_dg_deliveries TYPE HASHED TABLE OF ts_dg_delivery WITH UNIQUE KEY dg_packing_group .
+  types:
+    tt_vstel TYPE SORTED TABLE OF vstel WITH UNIQUE DEFAULT KEY .
+  types:
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002577
+    tt_profl TYPE SORTED TABLE OF adge_profl WITH UNIQUE DEFAULT KEY .
+  types:
+* End ADD:RAVULV1:16-Feb-2021:ECR202002577
+    BEGIN OF ts_delivery_group,
+      kunwe      TYPE kunwe,
+      vstel      TYPE vstel,
+      inco1      TYPE inco1,
+      inco2      TYPE inco2,
+      zterm      TYPE dzterm,
+      dggrp      TYPE adge_profl,
+      combi      TYPE flag,
+      dgrel      TYPE flag,
+      threshold  TYPE flag,
+      deliveries TYPE tt_delivery_info,
+      gt_profl   TYPE tt_profl,          "++ADD:RAVULV1:16-Feb-2021:ECR202002577
+      gt_vstel   TYPE tt_vstel,          "++ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+    END OF ts_delivery_group .
+  types:
+    tt_delivery_group TYPE SORTED TABLE OF ts_delivery_group WITH NON-UNIQUE KEY
+                                  kunwe vstel inco1 inco2 zterm .  " ++ADD:RAVULV1:16-Feb-2021:ECR202002577
+  types:
+    BEGIN OF ts_item_regulation,
+      vbeln     TYPE vbeln_vl,
+      posnr     TYPE posnr,
+      matnr     TYPE matnr,
+      werks     TYPE werks_d,
+      profl     TYPE adge_profl,
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+      route     TYPE route,
+      kunnr     TYPE kunnr,
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+      lwdg      TYPE thme_lwdg,
+      flow      TYPE zde_flow,   " ++ADD:RAVULV1:16-Feb-2021:ECR202002579
+      cont_dg   TYPE adge_ncdg,  " ++ADD:RAVULV1:16-Feb-2021:ECR202002577
+      processed TYPE abap_bool,
+    END OF ts_item_regulation .
+  types:
+    tt_item_regulation TYPE STANDARD TABLE OF ts_item_regulation WITH DEFAULT KEY .
+  types:
+    tt_dg_matrix TYPE STANDARD TABLE OF zorf_dg_matrix WITH DEFAULT KEY .
+  types TS_DG_MAT_INPUT type ZORF_DG_MATRIX .
+  types:
+    tt_r_lwdg TYPE RANGE OF thme_lwdg .
+  types:
+    BEGIN OF ts_delivery_header,
+      vbeln      TYPE vbeln_vl,
+      vstel      TYPE vstel,
+      inco1      TYPE inco1,
+      inco2      TYPE inco2,
+      route      TYPE route,
+      kunnr      TYPE kunwe,
+      cont_dg    TYPE adge_ncdg,
+      zzdg_lwdg  TYPE thme_lwdg,
+      zzdg_trans TYPE zde_dg_trans,
+    END OF ts_delivery_header .
+  types:
+    tt_delivery_header TYPE SORTED TABLE OF ts_delivery_header
+                             WITH UNIQUE KEY vbeln .
+  types:
+    BEGIN OF ts_delivery_item,
+      vbeln TYPE vbeln_vl,
+      posnr TYPE posnr_vl,
+      pstyv TYPE pstyv_vl,
+      matnr TYPE matnr,
+      werks TYPE werks_d,
+      lfimg TYPE lfimg,
+      meins TYPE meins,
+      vrkme TYPE vrkme,
+      vgbel TYPE vgbel,
+      vgtyp TYPE vbtyp,
+      uepos TYPE uepos,
+      profl TYPE adge_profl,
+    END OF ts_delivery_item .
+  types:
+    tt_delivery_item TYPE STANDARD TABLE OF ts_delivery_item
+                          WITH DEFAULT KEY .
+  types:
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+    tt_y2_flows TYPE SORTED TABLE OF zorf_y2_flows
+                    WITH UNIQUE KEY route plant kunnr .
+  types:
+    tt_r_flow TYPE RANGE OF zde_flow .
+  types:
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+    BEGIN OF ts_keys,
+      gt_profl            TYPE tt_r_profl,
+      gt_plants           TYPE range_t_werks_d,
+      gt_lwdg             TYPE tt_r_lwdg,
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+      gt_kunnr            TYPE ztt_r_kunnr,
+      gt_routes           TYPE ztt_r_route,
+      gt_flow             TYPE tt_r_flow,
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+      gt_item_regulation  TYPE tt_item_regulation,
+      gt_sales_order_info TYPE tt_sales_order_info,
+      gt_delivery_header  TYPE tt_delivery_header,
+      gt_delivery_item    TYPE tt_delivery_item,
+      gt_y2_flows         TYPE tt_y2_flows,  " ++ADD:RAVULV1:16-Feb-2021:ECR202002579
+    END OF ts_keys .
+  types:
+    BEGIN OF ts_check_threshold,
+      dgrel     TYPE flag,
+      threshold TYPE flag,
+    END OF ts_check_threshold .
+  types:
+* End ADD:RAVULV1:18-Mar-2020:ECR201902596
+    BEGIN OF ts_shippt_combi_notallowed,
+      vstel1 TYPE vstel,
+      vstel2 TYPE vstel,
+    END OF ts_shippt_combi_notallowed .
+  types:
+    tt_shippt_combi_notallowed TYPE STANDARD TABLE OF ts_shippt_combi_notallowed INITIAL SIZE 0 .
+  types:
+    tt_ebeln TYPE HASHED TABLE OF ebeln WITH UNIQUE DEFAULT KEY .
+  types:
+    tt_vbeln TYPE HASHED TABLE OF vbeln_va WITH UNIQUE DEFAULT KEY .
+
+  data GO_VIEW type ref to ZCL_MOT_CVC_REPORT_VIEW .
+  data GO_MODEL type ref to ZCL_MOT_CVC_REPORT_MODEL .
+  data GT_DATA type ZTT_MOT_CVC_REPORT .
+  constants:
+    BEGIN OF gc_sd_doc_category,
+      inbound_delivery  TYPE vbtyp VALUE '7',
+      outbound_delivery TYPE vbtyp VALUE 'J',
+    END OF gc_sd_doc_category .
+  data G_CALC_TYPE type ZTV_MOT_CVC_CALC_TYPE .
+  data GR_LAST_SELECTION type ref to DATA .
+  constants GC_BASE_WEIGHT_UOM type GEWEI value 'KG' ##NO_TEXT.
+  constants GC_SHIPMENT_FLOW type ZDE_FLOW value 'S' ##NO_TEXT.
+  constants GC_Y2_FLOW type ZDE_FLOW value 'Y' ##NO_TEXT.   " ++ADD:RAVULV1:16-Feb-2021:ECR202002579
+  constants GC_DG_GROUP_NON_DG type ADGE_PROFL value 'NDG' ##NO_TEXT.
+  constants:
+    BEGIN OF gc_enhancement_attributes,
+      rdd1636            TYPE z_orf_enhancement VALUE 'RDD1636',
+      threshold_checks   TYPE z_orf_enhancement_attr VALUE 'THRESHOLD_CHECKS',
+      shippt_combination TYPE z_orf_enhancement_attr VALUE 'SHIP_POINT_COMBI_NOTALLOWED',
+    END OF gc_enhancement_attributes .
+  data GT_STO_DOC_CATEGORY type ZAPO_CVALUES_T .
+  data GT_ENHANCEMENT_ATTRIBUTES type ZORF_TT_ENHANCEMENT .
+  data GT_R_THRESHOLD_PROFL type TT_R_PROFL .
+  constants GC_MSG_TYPE_E type SYMSGTY value 'E' ##NO_TEXT.
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+  data GT_ROUTES type ZTT_ROUTE .
+  data GT_DELIVERIES type TT_DELIVERIES .
+  data:
+    gt_displaytable TYPE STANDARD TABLE OF tdline INITIAL SIZE 0 .
+  data GV_ROUTE_ALIGN_PROCESSED type ABAP_BOOL .
+  data GT_R_SHIPPT_COMBI_NOTALLOWED type TT_SHIPPT_COMBI_NOTALLOWED .
+  data GT_DELIVERY_ITEMS type TT_DELIVERY_ITEM .
+  data GV_DOC_TYPE type ZDE_DOC_TYP .
+  data:
+    gt_r_doctype TYPE RANGE OF zde_doc_typ .
+
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+  methods CONVERT_WEIGHT
+    importing
+      !IV_WEIGHT type NTGEW_15
+      !IV_UOM type GEWEI
+    returning
+      value(RV_CONVERTED_WEIGHT) type NTGEW_15
+    raising
+      ZCX_MOT_CVC_REPORT .
+  methods SET_LAST_SELECTION
+    importing
+      !IS_CRITERIA type ANY .
+  methods REFRESH_OVERVIEW
+    raising
+      ZCX_MOT_CVC_REPORT .
+  methods CREATE_SHIPMENT
+    importing
+      !IV_TRANS_PLANNING_POINT type TPLST
+      !IV_SHIPMENT_TYPE type SHTYP
+      !IT_DELIVERIES type ZCL_MOT_CVC_REPORT_CNTRL=>TT_DELIVERIES
+    returning
+      value(RV_SHIPMENT_NUMBER) type TKNUM
+    raising
+      ZCX_MOT_CVC_REPORT .
+  methods ON_START_OF_SELECTION
+    for event START_OF_SELECTION of ZCL_MOT_CVC_REPORT_VIEW
+    importing
+      !IS_CRITERIA .
+  methods ON_VOLUME_CALCULATION_CLICKED
+    for event BTN_VOLUME_CALCULATION_CLICKED of ZCL_MOT_CVC_REPORT_VIEW .
+  methods ON_EXEC_CALCULATION_CLICKED
+    for event BTN_EXEC_CALCULATION_CLICKED of ZCL_MOT_CVC_REPORT_VIEW
+    importing
+      !IV_SHPMH
+      !IV_SHPMH_NUM
+      !IV_CALC_BASE .
+  methods ON_CREATE_SHIPMENT_CLICKED
+    for event BTN_CREATE_SHIPMENT_CLICKED of ZCL_MOT_CVC_REPORT_VIEW .
+  methods ON_EXEC_CREATE_SHIP_CLICKED
+    for event BTN_EXEC_CREATE_SHIP_CLICKED of ZCL_MOT_CVC_REPORT_VIEW
+    importing
+      !IV_TRANS_PLANNING_POINT
+      !IV_SHIPMENT_TYPE .
+  methods ON_HOTSPOT_SD_DOC_CLICKED
+    for event HOTSPOT_SD_DOC_CLICKED of ZCL_MOT_CVC_REPORT_VIEW
+    importing
+      !IV_SD_DOCUMENT
+      !IV_CATEGORY .
+  methods ON_HOTSPOT_SHIPMENT_CLICKED
+    for event HOTSPOT_SHIPMENT_CLICKED of ZCL_MOT_CVC_REPORT_VIEW
+    importing
+      !IV_SHIPMENT .
+  methods ON_HOTSPOT_PURCH_DOC_CLICKED
+    for event HOTSPOT_PURCH_DOC_CLICKED of ZCL_MOT_CVC_REPORT_VIEW
+    importing
+      !IV_PURCHASING_DOCUMENT .
+  methods ON_SHIPMENT_SIMULATE_CLICKED
+    for event BTN_SHIPMENT_SIMULATE_CLICKED of ZCL_MOT_CVC_REPORT_VIEW .
+  class-methods _REVISION_LOG .
+  methods DANGEROUS_GOODS_CHECK
+    importing
+      !IT_DELIVERIES type TT_DELIVERIES
+    returning
+      value(RT_DG_DELIVERIES) type TT_DG_DELIVERIES .
+  methods EXECUTE_CHECKS
+    importing
+      !IT_DELIVERIES type TT_DELIVERIES
+      !IT_Y2_FLOWS_INPUT type TT_Y2_FLOWS  " ++ADD:RAVULV1:16-Feb-2021:ECR202002579
+    returning
+      value(RV_BOOL) type ABAP_BOOL .
+  methods DISPLAY_INFORMATION
+    importing
+      !IS_CHECK_VALUESX type TS_CHECK_VALUESX
+      !IT_DELIVERIES type TT_DELIVERIES
+      !IT_DG_DELIVERIES type TT_DG_DELIVERIES .
+  methods COLLECT_KEYS
+    importing
+      !IT_DELIVERIES type TT_DELIVERIES
+      !IT_Y2_FLOWS_INPUT type TT_Y2_FLOWS  " ++ADD:RAVULV1:16-Feb-2021:ECR202002579
+    returning
+      value(RS_KEYS) type TS_KEYS .
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+  methods GET_DG_MATRIX
+    importing
+      !IT_PROFL type TT_R_PROFL
+      !IT_DG_REGULATION type TT_R_LWDG
+      !IT_PLANTS type RANGE_T_WERKS_D
+      !IT_KUNNR type ZTT_R_KUNNR
+      !IT_ROUTES type ZTT_R_ROUTE
+      !IT_FLOW type TT_R_FLOW
+    returning
+      value(RT_DG_MATRIX) type TT_DG_MATRIX .
+  methods GET_DG_GROUP
+    importing
+      !IS_DG_MAT_INPUT type TS_DG_MAT_INPUT
+      !IT_DG_MATRIX type TT_DG_MATRIX
+    returning
+      value(RV_DG_GROUP) type ADGE_PROFL .
+  methods DETERMINE_PACKAGES
+    importing
+      !IT_DELIVERIES type TT_DELIVERIES
+      !IT_Y2_FLOWS_INPUT type TT_Y2_FLOWS .  " ++ADD:RAVULV1:16-Feb-2021:ECR202002579
+  methods CHECK_ABOVE_THRESHOLD
+    importing
+      !IT_DELIVERY_HEADER type TT_DELIVERY_HEADER
+      !IT_DELIVERY_ITEMS type TT_DELIVERY_ITEM
+      !IT_DELIVERIES type TT_DELIVERY_INFO
+    returning
+      value(RS_THRESHOLD_CHECK) type TS_CHECK_THRESHOLD .
+  methods GROUP_DELIVERIES
+    importing
+      !IS_KEYS type TS_KEYS
+      !IT_DG_MATRIX type TT_DG_MATRIX
+    returning
+      value(RT_DELIVERY_GROUP) type TT_DELIVERY_GROUP .
+  methods DANGEROUS_GOODS_CHECK_NEW
+    importing
+      !IT_DELIVERIES type TT_DELIVERIES
+      !IT_Y2_FLOWS_INPUT type TT_Y2_FLOWS             " ++ADD:RAVULV1:16-Feb-2021:ECR202002579
+    returning
+      value(RT_DG_DELIVERIES) type TT_DG_DELIVERIES .
+  methods ADD_NDG_DELIVERIES_TO_PACKAGE
+    importing
+      !IS_KEYS type TS_KEYS
+      !IT_DG_MATRIX type TT_DG_MATRIX
+    changing
+      !CT_DELIVERY_GROUP type TT_DELIVERY_GROUP .
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+  methods ON_ALIGN_ROUTES_CLICKED
+    for event BTN_ALIGN_ROUTES of ZCL_MOT_CVC_REPORT_VIEW
+    importing
+      !IV_SELECTED_ROUTE .
+  methods DISPLAY_ROUTE_ALIGNMENT_LOG
+    returning
+      value(RV_ERROR) type ABAP_BOOL .
+  methods CHECK_SHIPPING_POINT
+    importing
+      !IT_GROUP_SHIPPING_POINTS type TT_VSTEL optional
+      !IV_DELVRY_SHIPPING_POINT type VSTEL
+      !IV_GROUP_SHIPPING_POINT type VSTEL
+    returning
+      value(RV_SHIPPING_POINT) type VSTEL .
+  methods GET_ORDER_TYPE
+    importing
+      !IT_EBELN type TT_EBELN
+      !IT_VBELN type TT_VBELN .
+ENDCLASS.
+
+
+
+CLASS ZCL_MOT_CVC_REPORT_CNTRL IMPLEMENTATION.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->ADD_NDG_DELIVERIES_TO_PACKAGE
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IS_KEYS                        TYPE        TS_KEYS
+* | [--->] IT_DG_MATRIX                   TYPE        TT_DG_MATRIX
+* | [<-->] CT_DELIVERY_GROUP              TYPE        TT_DELIVERY_GROUP
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD add_ndg_deliveries_to_package.
+* Begin ADD:RAVULV1:29-Jul-2020:ECR201902596:TPR-22182
+
+  DATA : lt_delivery_group      TYPE tt_delivery_group,               " ++ADD:RAVULV1:16-Feb-2021:ECR202002577
+* Begin ADD:RAVULV1:11-Mar-2021:ECR202002577:TPR-23610
+         lt_delivery_group_temp TYPE STANDARD TABLE OF ts_delivery_group INITIAL SIZE 0,
+* End ADD:RAVULV1:11-Mar-2021:ECR202002577:TPR-23610
+         lv_first_ndg_delivery  TYPE vbeln_vl.   " ++ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+
+* Consider only non-DG deliveries in this method to check for adding to
+* relevant package or creating a separate package
+  DATA(lt_item_regulation) = is_keys-gt_item_regulation[].
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002577
+  DELETE lt_item_regulation WHERE cont_dg IS NOT INITIAL.
+  SORT lt_item_regulation BY vbeln.
+  DELETE ADJACENT DUPLICATES FROM lt_item_regulation COMPARING vbeln.
+* End ADD:RAVULV1:16-Feb-2021:ECR202002577
+
+  CHECK lt_item_regulation[] IS NOT INITIAL.
+
+* Begin ADD:RAVULV1:11-Mar-2021:ECR202002577:TPR-23610
+  lt_delivery_group_temp[] = ct_delivery_group[].
+* DGGRP descending is to make sure NDG goes into the package with highest DG group
+* whenever it is allowed
+  SORT lt_delivery_group_temp BY kunwe vstel inco1 inco2 zterm dggrp DESCENDING.
+
+  LOOP AT lt_delivery_group_temp REFERENCE INTO DATA(lr_delivery_group).
+* End ADD:RAVULV1:11-Mar-2021:ECR202002577:TPR-23610
+* If the current package is DG-relevant, check if the package has deliveries
+* relevant for threshold checks, and those deliveries eligible for threshold
+* checks exceed the threshold or not
+* Ex: If Z11 (always DG relevant) and Z10 (threshold checks eligible) can be
+* combined as per ZORF_DG_MATRIX set up, need to check if Z10 deliveries
+* exceed threshold or not, and NDG can be combined in same package (again
+* based on ZORF_DG_MATRIX set up that NDG can be combined with Z11/Z10)
+    IF lr_delivery_group->dgrel IS NOT INITIAL.
+      DATA(lt_deliveries) = lr_delivery_group->deliveries[].
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+* Below sequential read is not adjusted, as the internal table is not expected to have more than 10 entries
+* and does not cause any performance issues
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+      DELETE lt_deliveries WHERE dggrp IS INITIAL.
+      IF lt_deliveries[] IS NOT INITIAL AND lr_delivery_group->threshold IS NOT INITIAL.
+        CLEAR lt_deliveries[].
+        CONTINUE.
+      ENDIF.
+    ENDIF.
+    TRY.
+        DATA(lv_dg_regulation) = lr_delivery_group->deliveries[ 1 ]-lwdg.
+      CATCH cx_sy_itab_line_not_found.
+    ENDTRY.
+
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002577
+    LOOP AT lt_item_regulation REFERENCE INTO DATA(lr_item_reg).
+
+      READ TABLE is_keys-gt_delivery_header REFERENCE INTO DATA(lr_delivery)
+           WITH TABLE KEY vbeln = lr_item_reg->vbeln.
+      IF sy-subrc NE 0.
+        CONTINUE.
+      ENDIF.
+
+* Begin ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+      DATA(lv_shipping_point) = check_shipping_point( it_group_shipping_points = lr_delivery_group->gt_vstel
+                                                      iv_delvry_shipping_point = lr_delivery->vstel
+                                                      iv_group_shipping_point  = lr_delivery_group->vstel ).
+* End ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+
+      LOOP AT lr_delivery_group->gt_profl REFERENCE INTO DATA(lr_profl).
+* Begin ADD:RAVULV1:01-Feb-2024:INC10617507
+        IF lr_profl->* EQ gc_dg_group_non_dg.
+          CONTINUE.
+        ENDIF.
+* End ADD:RAVULV1:01-Feb-2024:INC10617507
+        DATA(ls_dg_mat_input) = VALUE ts_dg_mat_input( zgrp  = lr_profl->*
+                                                       lwdg  = lv_dg_regulation
+                                                       werks = lr_item_reg->werks
+                                                       kunnr = lr_item_reg->kunnr
+                                                       route = lr_item_reg->route
+                                                       flow  = lr_item_reg->flow   " ++TPR-23582
+                                                       zsgr  = gc_dg_group_non_dg ).
+** CHECK zorf_dg_matrix for the grouping criteria
+        DATA(lv_dg_grp) = get_dg_group( EXPORTING it_dg_matrix    = it_dg_matrix
+                                                  is_dg_mat_input = ls_dg_mat_input ).
+
+        IF lv_dg_grp IS INITIAL.
+          EXIT.
+        ENDIF.
+      ENDLOOP.
+
+      IF lv_dg_grp IS INITIAL.
+        CONTINUE.
+      ENDIF.
+
+      READ TABLE is_keys-gt_delivery_item REFERENCE INTO DATA(lr_lips)
+           WITH KEY vbeln = lr_item_reg->vbeln
+                    posnr = lr_item_reg->posnr BINARY SEARCH.
+      IF sy-subrc NE 0.
+        CONTINUE.
+      ENDIF.
+
+      READ TABLE is_keys-gt_sales_order_info REFERENCE INTO DATA(lr_sales_order_info)
+          WITH TABLE KEY vbeln = lr_lips->vgbel.
+      IF syst-subrc NE 0.
+        IF lr_lips->vgtyp NOT IN gt_sto_doc_category[]
+        OR gt_sto_doc_category[] IS INITIAL.
+          CONTINUE.
+        ENDIF.
+      ELSE.
+        DATA(lv_zterm) = lr_sales_order_info->zterm.
+      ENDIF.
+
+      IF  lr_delivery_group->kunwe = lr_delivery->kunnr
+      AND lr_delivery_group->vstel = lv_shipping_point   " ++ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+      AND lr_delivery_group->inco1 = lr_delivery->inco1
+      AND lr_delivery_group->inco2 = lr_delivery->inco2
+      AND lr_delivery_group->zterm = lv_zterm.
+        READ TABLE lr_delivery_group->deliveries TRANSPORTING NO FIELDS
+             WITH TABLE KEY vbeln = lr_item_reg->vbeln.
+        IF sy-subrc NE 0.
+          INSERT VALUE #( vbeln = lr_delivery->vbeln
+                          route = lr_delivery->route ) INTO TABLE lr_delivery_group->deliveries.
+        ENDIF.
+        lr_item_reg->processed = abap_true.
+      ENDIF.
+    ENDLOOP.
+* End ADD:RAVULV1:16-Feb-2021:ECR202002577
+    DELETE lt_item_regulation WHERE processed = abap_true.
+  ENDLOOP.
+* If no package found for non-DG deliveries
+* Begin ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+  CLEAR : lv_shipping_point, lv_first_ndg_delivery.
+
+  TRY.
+      lv_first_ndg_delivery = lt_item_regulation[ 1 ]-vbeln.
+    CATCH cx_sy_itab_line_not_found.
+  ENDTRY.
+* End ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+
+  IF sy-subrc NE 0 OR lt_item_regulation[] IS NOT INITIAL.
+
+    LOOP AT lt_item_regulation REFERENCE INTO lr_item_reg.
+      READ TABLE is_keys-gt_delivery_header REFERENCE INTO lr_delivery
+           WITH TABLE KEY vbeln = lr_item_reg->vbeln.
+      IF sy-subrc NE 0.
+        CONTINUE.
+      ENDIF.
+
+      READ TABLE is_keys-gt_delivery_item REFERENCE INTO  lr_lips
+           WITH KEY vbeln = lr_item_reg->vbeln
+                    posnr = lr_item_reg->posnr BINARY SEARCH.
+      IF sy-subrc NE 0.
+        CONTINUE.
+      ENDIF.
+
+      READ TABLE is_keys-gt_sales_order_info REFERENCE INTO  lr_sales_order_info
+          WITH TABLE KEY vbeln = lr_lips->vgbel.
+      IF syst-subrc NE 0.
+        IF lr_lips->vgtyp NOT IN gt_sto_doc_category[]
+        OR gt_sto_doc_category[] IS INITIAL.
+          CONTINUE.
+        ENDIF.
+      ELSE.
+        lv_zterm = lr_sales_order_info->zterm.
+      ENDIF.
+
+* Begin ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+      IF lv_first_ndg_delivery EQ lr_item_reg->vbeln.
+        READ TABLE lt_delivery_group TRANSPORTING NO FIELDS
+             WITH TABLE KEY kunwe = lr_delivery->kunnr
+                            vstel = lr_delivery->vstel
+                            inco1 = lr_delivery->inco1
+                            inco2 = lr_delivery->inco2
+                            zterm = lv_zterm.
+        IF sy-subrc NE 0.
+          INSERT VALUE #( kunwe = lr_delivery->kunnr
+                          vstel = lr_delivery->vstel
+                          inco1 = lr_delivery->inco1
+                          inco2 = lr_delivery->inco2
+                          zterm = lv_zterm
+                          dggrp = gc_dg_group_non_dg
+                          gt_vstel = VALUE #( ( lr_delivery->vstel ) )
+                          deliveries = VALUE #( ( vbeln = lr_delivery->vbeln
+                                                  route = lr_delivery->route ) ) ) INTO TABLE lt_delivery_group.
+        ENDIF.
+        CONTINUE.
+      ELSE.
+        LOOP AT lt_delivery_group REFERENCE INTO lr_delivery_group.
+          lv_shipping_point = check_shipping_point( it_group_shipping_points = lr_delivery_group->gt_vstel[]
+                                                    iv_delvry_shipping_point = lr_delivery->vstel
+                                                    iv_group_shipping_point  = lr_delivery_group->vstel ).
+
+          IF lr_delivery_group->kunwe NE lr_delivery->kunnr
+          OR lr_delivery_group->vstel NE lv_shipping_point
+          OR lr_delivery_group->inco1 NE lr_delivery->inco1
+          OR lr_delivery_group->inco2 NE lr_delivery->inco2
+          OR lr_delivery_group->zterm NE lv_zterm.
+            CONTINUE.
+          ENDIF.
+
+          DATA(lv_delivery_added) = abap_true.
+          READ TABLE lr_delivery_group->deliveries TRANSPORTING NO FIELDS
+               WITH TABLE KEY vbeln = lr_delivery->vbeln.
+          IF sy-subrc NE 0.
+            INSERT VALUE #( vbeln = lr_delivery->vbeln
+                            route = lr_delivery->route ) INTO TABLE lr_delivery_group->deliveries.
+            EXIT.
+          ENDIF.
+        ENDLOOP.
+
+        IF lv_delivery_added IS INITIAL.
+          INSERT VALUE #( kunwe = lr_delivery->kunnr
+                          vstel = lr_delivery->vstel
+                          inco1 = lr_delivery->inco1
+                          inco2 = lr_delivery->inco2
+                          zterm = lv_zterm
+                          dggrp = gc_dg_group_non_dg
+                          gt_vstel = VALUE #( ( lr_delivery->vstel ) )
+                          deliveries = VALUE #( ( vbeln = lr_delivery->vbeln
+                                                  route = lr_delivery->route ) ) ) INTO TABLE lt_delivery_group.
+        ENDIF.
+      ENDIF.
+* End ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+      CLEAR : lv_zterm, lv_delivery_added.  " ++ADD:RAVULV1:25-May-2021:INC7123747
+    ENDLOOP.
+  ENDIF.
+
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002577
+* Begin ADD:RAVULV1:11-Mar-2021:ECR202002577:TPR-23610
+  CLEAR ct_delivery_group[].
+  INSERT LINES OF lt_delivery_group_temp INTO TABLE ct_delivery_group.
+* End ADD:RAVULV1:11-Mar-2021:ECR202002577:TPR-23610
+  IF lt_delivery_group[] IS NOT INITIAL.
+    INSERT LINES OF lt_delivery_group INTO TABLE ct_delivery_group.
+  ENDIF.
+* End ADD:RAVULV1:16-Feb-2021:ECR202002577
+* End ADD:RAVULV1:29-Jul-2020:ECR201902596:TPR-22182
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->CHECK_ABOVE_THRESHOLD
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IT_DELIVERY_HEADER             TYPE        TT_DELIVERY_HEADER
+* | [--->] IT_DELIVERY_ITEMS              TYPE        TT_DELIVERY_ITEM
+* | [--->] IT_DELIVERIES                  TYPE        TT_DELIVERY_INFO
+* | [<-()] RS_THRESHOLD_CHECK             TYPE        TS_CHECK_THRESHOLD
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD check_above_threshold.
+* Begin ADD:RAVULV1:18-Mar-2020:ECR201902596
+
+  DATA : lt_org_doc_materials TYPE zclorf_2419_dg_rule_engine=>tt_org_doc_materials,
+         ls_org_doc_material  TYPE zclorf_2419_dg_rule_engine=>ts_org_doc_material,
+         lv_dg_regulation     TYPE thme_lwdg,
+         lv_threshold_check   TYPE abap_bool,
+         lv_dg_relevance      TYPE abap_bool.
+
+  CLEAR : rs_threshold_check.
+
+** Get the DG rule engine instance
+  DATA(lo_dg_handler) = zclorf_2419_dg_rule_engine=>get_instance( ).
+
+** Loop at the supplied list of DG/non-DG delivery combinations in the package
+* Begin DEL:RAVULV1:26-Oct-2021:ECR251958033
+*  LOOP AT it_deliveries REFERENCE INTO DATA(lr_deliveries) WHERE dggrp IS NOT INITIAL.
+* End DEL:RAVULV1:26-Oct-2021:ECR251958033
+
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+  LOOP AT it_deliveries REFERENCE INTO DATA(lr_deliveries).
+
+    CHECK lr_deliveries->dggrp IS NOT INITIAL.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+
+* Begin ADD:RAVULV1:28-Jul-2020:ECR201902596:TPR-22182
+    IF lv_dg_relevance IS INITIAL.
+      lv_dg_relevance = lr_deliveries->dgrel.
+    ENDIF.
+* End ADD:RAVULV1:28-Jul-2020:ECR201902596:TPR-22182
+
+    READ TABLE it_delivery_items TRANSPORTING NO FIELDS
+         WITH KEY vbeln = lr_deliveries->vbeln BINARY SEARCH.
+    IF sy-subrc EQ 0.
+      DATA(lv_tabix) = sy-tabix.
+
+** Loop on the delivery items only for the relevant supplied delivery numbers
+      LOOP AT it_delivery_items REFERENCE INTO DATA(lr_delivery_item) FROM lv_tabix.
+        IF lr_delivery_item->vbeln NE lr_deliveries->vbeln.
+          EXIT.
+        ENDIF.
+
+* Begin ADD:RAVULV1:28-Jul-2020:ECR201902596:TPR-22182
+        READ TABLE gt_enhancement_attributes TRANSPORTING NO FIELDS
+             WITH KEY enhancement_attr = gc_enhancement_attributes-threshold_checks
+                      char_name        = lr_deliveries->lwdg
+                      char_value       = lr_delivery_item->profl BINARY SEARCH.
+        IF sy-subrc EQ 0.
+          lv_threshold_check = abap_true.
+        ENDIF.
+* End ADD:RAVULV1:28-Jul-2020:ECR201902596:TPR-22182
+
+        CLEAR ls_org_doc_material.
+
+        READ TABLE it_delivery_header REFERENCE INTO DATA(lr_delivery_header)
+             WITH TABLE KEY vbeln = lr_delivery_item->vbeln.
+        IF sy-subrc EQ 0.
+          IF lv_dg_regulation IS INITIAL.
+            lv_dg_regulation = lr_delivery_header->zzdg_lwdg.
+          ENDIF.
+
+** Collect quantity per material/DG profile in base UoM
+          IF lr_delivery_item->vrkme NE lr_delivery_item->meins.
+            CALL FUNCTION 'MD_CONVERT_MATERIAL_UNIT'
+              EXPORTING
+                i_matnr              = lr_delivery_item->matnr
+                i_in_me              = lr_delivery_item->vrkme
+                i_out_me             = lr_delivery_item->meins
+                i_menge              = lr_delivery_item->lfimg
+              IMPORTING
+                e_menge              = ls_org_doc_material-lfimg
+              EXCEPTIONS
+                error_in_application = 1
+                error                = 2
+                OTHERS               = 3.
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+            IF sy-subrc IS NOT INITIAL.
+              CLEAR : ls_org_doc_material-lfimg.
+            ENDIF.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+          ELSE.
+            ls_org_doc_material-lfimg = lr_delivery_item->lfimg.
+          ENDIF.
+          ls_org_doc_material-matnr = lr_delivery_item->matnr.
+          ls_org_doc_material-meins = lr_delivery_item->meins.
+          ls_org_doc_material-werks = lr_delivery_item->werks.
+          ls_org_doc_material-profl = lr_delivery_item->profl.
+
+          COLLECT ls_org_doc_material INTO lt_org_doc_materials.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+  ENDLOOP.
+
+* Begin ADD:RAVULV1:13-Aug-2020:ECR201902596:TPR-22182
+* If threshold check relevant deliveries are already DG relevant, no need to
+* check further, this is a DG-relevant package and if deliveries are relevant
+* for threshold check (to combine NDG or not), mark threshold flag
+  IF lv_dg_relevance IS NOT INITIAL.
+    rs_threshold_check-dgrel = lv_dg_relevance.
+    IF lv_threshold_check IS NOT INITIAL.
+      rs_threshold_check-threshold = lv_threshold_check.
+    ENDIF.
+    RETURN.
+  ENDIF.
+* End ADD:RAVULV1:13-Aug-2020:ECR201902596:TPR-22182
+
+  IF lt_org_doc_materials[] IS NOT INITIAL.  " ++ADD:RAVULV1:28-Jul-2020:ECR201902596:TPR-22182
+
+** Get the date for checking DGTMD records
+    DATA(lv_date_for_dgtmd) = sy-datum.
+
+** Call the DG rule engine relevance check method to check for thresholds
+    DATA(ls_dg_relevance) = lo_dg_handler->is_dg_relevant( it_org_doc_materials = lt_org_doc_materials
+                                                           iv_regulation        = lv_dg_regulation
+                                                           iv_date_for_dgtmd    = lv_date_for_dgtmd  ).
+* Begin ADD:RAVULV1:13-Aug-2020:ECR201902596:TPR-22182
+** Pass the DG relevant for transport indicator
+    rs_threshold_check-dgrel = ls_dg_relevance-transport.
+
+    IF lv_threshold_check IS NOT INITIAL.
+      rs_threshold_check-threshold = ls_dg_relevance-transport.
+    ENDIF.
+* End ADD:RAVULV1:13-Aug-2020:ECR201902596:TPR-22182
+  ENDIF.                                    " ++ADD:RAVULV1:28-Jul-2020:ECR201902596:TPR-22182
+
+* End ADD:RAVULV1:18-Mar-2020:ECR201902596
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->CHECK_SHIPPING_POINT
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IT_GROUP_SHIPPING_POINTS       TYPE        TT_VSTEL(optional)
+* | [--->] IV_DELVRY_SHIPPING_POINT       TYPE        VSTEL
+* | [--->] IV_GROUP_SHIPPING_POINT        TYPE        VSTEL
+* | [<-()] RV_SHIPPING_POINT              TYPE        VSTEL
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD check_shipping_point.
+* Begin ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+
+  CLEAR rv_shipping_point.
+
+  IF gt_r_shippt_combi_notallowed[] IS INITIAL OR it_group_shipping_points[] IS INITIAL.
+    rv_shipping_point = iv_group_shipping_point.
+    RETURN.
+  ENDIF.
+
+  LOOP AT it_group_shipping_points ASSIGNING FIELD-SYMBOL(<ls_group_shipping_point>).
+    READ TABLE gt_r_shippt_combi_notallowed TRANSPORTING NO FIELDS
+         WITH KEY vstel1 = <ls_group_shipping_point>
+                  vstel2 = iv_delvry_shipping_point BINARY SEARCH.
+    IF sy-subrc EQ 0.
+      DATA(lv_combination_not_allowed) = abap_true.
+      EXIT.
+    ENDIF.
+  ENDLOOP.
+
+  IF lv_combination_not_allowed IS NOT INITIAL.
+    rv_shipping_point = iv_delvry_shipping_point.
+  ELSE.
+    rv_shipping_point = iv_group_shipping_point.
+  ENDIF.
+
+  CLEAR : lv_combination_not_allowed.
+
+* End ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->COLLECT_KEYS
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IT_DELIVERIES                  TYPE        TT_DELIVERIES
+* | [--->] IT_Y2_FLOWS_INPUT              TYPE        TT_Y2_FLOWS
+* | [<-()] RS_KEYS                        TYPE        TS_KEYS
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD collect_keys.
+* Begin ADD:RAVULV1:18-Mar-2020:ECR201902596
+
+  DATA : lt_delivery_data   TYPE tt_delivery_header,
+         lt_lips            TYPE tt_delivery_item,
+         lt_sales_orders    TYPE SORTED TABLE OF vbeln_va WITH UNIQUE DEFAULT KEY,
+         lt_item_regulation TYPE tt_item_regulation,
+         lt_y2_flows        TYPE tt_y2_flows.   " ++ADD:RAVULV1:16-Feb-2021:ECR202002579
+
+  DATA(lo_mot_reclass) = zclorf_2425_dg_mot_reclass=>get_instance( ).
+
+  CLEAR : rs_keys,         " ++ADD:RAVULV1:16-Feb-2021:ECR202002577
+          gt_r_doctype.    " ++ADD:RAVULV1:26-Oct-2021:ECR251958033
+
+** Get delivery data:
+  SELECT vbeln
+         vstel
+         inco1
+         inco2
+         route
+         kunnr
+         cont_dg
+         zzdg_lwdg
+         zzdg_trans
+         FROM likp
+         INTO TABLE lt_delivery_data
+         FOR ALL ENTRIES IN it_deliveries
+         WHERE vbeln EQ it_deliveries-table_line.
+  IF sy-subrc NE 0.
+    RETURN.
+  ENDIF.
+
+** Get delivery Item data
+  SELECT lips~vbeln
+         lips~posnr
+         lips~pstyv
+         lips~matnr
+         lips~werks
+         lips~lfimg
+         lips~meins
+         lips~vrkme
+         lips~vgbel
+         lips~vgtyp
+         lips~uepos
+         mara~profl
+         FROM lips
+         LEFT JOIN mara
+         ON lips~matnr = mara~matnr
+         INTO TABLE lt_lips
+         FOR ALL ENTRIES IN it_deliveries
+         WHERE vbeln = it_deliveries-table_line.
+
+  IF syst-subrc EQ 0.
+
+    SORT lt_lips BY vbeln posnr.
+
+** Check if there are any bundle components and they meet the DG reclass criteria
+    DATA(lt_dg_reclass_input) = VALUE ztt_dg_reclass_info( FOR ls_lips IN lt_lips
+                                                         ( docnum   = ls_lips-vbeln
+                                                           posnr    = ls_lips-uepos
+                                                           matnr    = ls_lips-matnr
+                                                           quantity = ls_lips-lfimg
+                                                           vrkme    = ls_lips-vrkme
+                                                           pstyv    = ls_lips-pstyv ) ).
+
+    lo_mot_reclass->check_bundle_reclass( CHANGING ct_dg_reclass_info = lt_dg_reclass_input[] ).
+
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+    IF it_y2_flows_input[] IS NOT INITIAL.
+      SELECT * FROM zorf_y2_flows
+               INTO TABLE lt_y2_flows
+               FOR ALL ENTRIES IN it_y2_flows_input
+               WHERE route = it_y2_flows_input-route
+               AND   plant = it_y2_flows_input-plant
+               AND   kunnr = it_y2_flows_input-kunnr.
+    ENDIF.
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+
+    LOOP AT lt_lips REFERENCE INTO DATA(lr_lips).
+
+      READ TABLE lt_delivery_data REFERENCE INTO DATA(lr_delivery_data)
+           WITH TABLE KEY vbeln = lr_lips->vbeln.
+      IF sy-subrc NE 0.
+        CONTINUE.
+      ENDIF.
+
+** Build the list of distinct sales orders
+      READ TABLE lt_sales_orders TRANSPORTING NO FIELDS
+           WITH TABLE KEY table_line = lr_lips->vgbel.
+      IF sy-subrc NE 0.
+        INSERT lr_lips->vgbel INTO TABLE lt_sales_orders.
+      ENDIF.
+
+** Build the list of distinct DG regulations
+      IF rs_keys-gt_lwdg[] IS INITIAL
+      OR lr_delivery_data->zzdg_lwdg NOT IN rs_keys-gt_lwdg[].
+        APPEND VALUE #( sign   = if_fdt_element=>gc_sign_include
+                        option = if_fdt_element=>gc_option_equal
+                        low    = lr_delivery_data->zzdg_lwdg ) TO rs_keys-gt_lwdg.
+      ENDIF.
+
+** Build the list of distinct plants
+      IF rs_keys-gt_plants[] IS INITIAL
+      OR lr_lips->werks NOT IN rs_keys-gt_plants[].
+        APPEND VALUE #( sign   = if_fdt_element=>gc_sign_include
+                        option = if_fdt_element=>gc_option_equal
+                        low    = lr_lips->werks ) TO rs_keys-gt_plants.
+      ENDIF.
+
+** Get Reclassification material and corresponding profile
+      READ TABLE lt_dg_reclass_input REFERENCE INTO DATA(lr_dg_reclass_input)
+           WITH TABLE KEY docnum = lr_lips->vbeln
+                          posnr  = lr_lips->posnr.
+      IF sy-subrc EQ 0.
+        DATA(lv_matnr) = lr_dg_reclass_input->repl_material.
+        DATA(lv_profl) = lr_dg_reclass_input->rep_mat_profl.
+      ELSE.
+        IF lr_lips->uepos IS NOT INITIAL.
+          READ TABLE lt_dg_reclass_input REFERENCE INTO lr_dg_reclass_input
+               WITH TABLE KEY docnum = lr_lips->vbeln
+                              posnr  = lr_lips->uepos.
+          IF sy-subrc EQ 0.
+            lv_matnr = lr_dg_reclass_input->repl_material.
+            lv_profl = lr_dg_reclass_input->rep_mat_profl.
+          ENDIF.
+        ENDIF.
+      ENDIF.
+
+      IF lv_matnr IS INITIAL.
+        lv_matnr = lr_lips->matnr.
+        lv_profl = lr_lips->profl.
+      ENDIF.
+
+      IF lv_matnr IS NOT INITIAL.
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+        READ TABLE lt_y2_flows REFERENCE INTO DATA(lr_y2_flow)
+             WITH TABLE KEY route = lr_delivery_data->route
+                            plant = lr_lips->werks
+                            kunnr = lr_delivery_data->kunnr.
+        IF sy-subrc EQ 0.
+          DATA(lv_flow) = gc_y2_flow.
+        ELSE.
+          lv_flow = gc_shipment_flow.
+        ENDIF.
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+
+        INSERT VALUE #( vbeln = lr_lips->vbeln
+                        posnr = lr_lips->posnr
+                        matnr = lv_matnr
+                        werks = lr_lips->werks
+                        profl = lv_profl
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+                        route = lr_delivery_data->route
+                        kunnr = lr_delivery_data->kunnr
+                        flow  = lv_flow
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002577
+                        cont_dg = lr_delivery_data->cont_dg
+* End ADD:RAVULV1:16-Feb-2021:ECR202002577
+                        lwdg  = lr_delivery_data->zzdg_lwdg ) INTO TABLE lt_item_regulation.
+
+** Build the list of distinct DG profile indicators
+        IF    lv_profl IS NOT INITIAL
+        AND ( rs_keys-gt_profl[] IS INITIAL OR
+              lv_profl NOT IN rs_keys-gt_profl[] ).
+          APPEND VALUE #( sign   = if_fdt_element=>gc_sign_include
+                          option = if_fdt_element=>gc_option_equal
+                          low    = lv_profl ) TO rs_keys-gt_profl.
+        ENDIF.
+      ENDIF.
+
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+      IF rs_keys-gt_kunnr[] IS INITIAL
+      OR lr_delivery_data->kunnr NOT IN rs_keys-gt_kunnr[].
+        APPEND VALUE #( sign   = if_fdt_element=>gc_sign_include
+                        option = if_fdt_element=>gc_option_equal
+                        low    = lr_delivery_data->kunnr ) TO rs_keys-gt_kunnr.
+      ENDIF.
+
+      IF rs_keys-gt_routes[] IS INITIAL
+      OR lr_delivery_data->route NOT IN rs_keys-gt_routes[].
+        APPEND VALUE #( sign   = if_fdt_element=>gc_sign_include
+                        option = if_fdt_element=>gc_option_equal
+                        low    = lr_delivery_data->route ) TO rs_keys-gt_routes.
+      ENDIF.
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+
+      CLEAR : lv_matnr, lv_profl.
+
+    ENDLOOP.
+
+** Get sales order data
+    IF lt_sales_orders[] IS NOT INITIAL.
+      SELECT vbeln
+             zterm
+             FROM vbkd
+             INTO TABLE rs_keys-gt_sales_order_info
+             FOR ALL ENTRIES IN lt_sales_orders
+             WHERE vbeln = lt_sales_orders-table_line.
+    ENDIF.
+
+    INSERT LINES OF lt_delivery_data INTO TABLE rs_keys-gt_delivery_header[].
+    INSERT LINES OF lt_lips          INTO TABLE rs_keys-gt_delivery_item[].
+
+    SORT lt_item_regulation BY profl DESCENDING.
+    INSERT LINES OF lt_item_regulation INTO TABLE rs_keys-gt_item_regulation.
+
+** Append a blank value for plants
+    APPEND VALUE #( sign   = if_fdt_element=>gc_sign_include
+                    option = if_fdt_element=>gc_option_equal
+                    low    = space ) TO : rs_keys-gt_plants[],
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+                                          rs_keys-gt_kunnr[],
+                                          rs_keys-gt_routes[],
+                                          gt_r_doctype[].         " ++ADD:RAVULV1:26-Oct-2021:ECR251958033
+
+    rs_keys-gt_flow[] = VALUE #( sign = if_fdt_element=>gc_sign_include
+                                 option = if_fdt_element=>gc_option_equal
+                               ( low = gc_shipment_flow ) ( low = gc_y2_flow ) ).
+
+    INSERT LINES OF lt_y2_flows INTO TABLE rs_keys-gt_y2_flows.
+    CLEAR : lt_y2_flows[].
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+  ENDIF.
+
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+  IF gv_doc_type IS NOT INITIAL.
+    APPEND VALUE #( sign   = if_fdt_element=>gc_sign_include
+                    option = if_fdt_element=>gc_option_equal
+                    low    = gv_doc_type ) TO gt_r_doctype[].
+  ENDIF.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+
+* Begin ADD:RAVULV1:28-Jul-2020:ECR201902596:TPR-22182
+  SELECT * FROM zorf_enhancement
+           INTO TABLE gt_enhancement_attributes
+           WHERE enhancement = gc_enhancement_attributes-rdd1636
+           AND   inactive    = abap_false.
+  IF sy-subrc EQ 0.
+    gt_r_threshold_profl[] = VALUE #( FOR <ls_attribute> IN gt_enhancement_attributes
+                                      WHERE ( enhancement_attr = gc_enhancement_attributes-threshold_checks )
+                                    ( sign = if_fdt_element=>gc_sign_include
+                                      option = if_fdt_element=>gc_option_equal
+                                      low = <ls_attribute>-char_value ) ).
+    SORT gt_enhancement_attributes BY enhancement_attr char_name char_value.
+
+* Begin ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+    gt_r_shippt_combi_notallowed[] = VALUE #( FOR <ls_attribute> IN gt_enhancement_attributes
+                                              WHERE ( enhancement_attr = gc_enhancement_attributes-shippt_combination )
+                                            ( vstel1 = <ls_attribute>-char_name
+                                              vstel2 = <ls_attribute>-char_value ) ).
+    IF gt_r_shippt_combi_notallowed[] IS NOT INITIAL.
+      SORT gt_r_shippt_combi_notallowed BY vstel1 vstel2.
+    ENDIF.
+* End ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+  ENDIF.
+* End ADD:RAVULV1:28-Jul-2020:ECR201902596:TPR-22182
+
+* End ADD:RAVULV1:18-Mar-2020:ECR201902596
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_CNTRL->CONSTRUCTOR
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD constructor.
+
+* Begin ADD:RAVULV1:19-Jun-2020:ECR201902596:TPR-22038
+  CONSTANTS : lc_rdd1636 TYPE zapo_edd VALUE 'RDD1636',
+              lc_cname   TYPE zapo_cname VALUE 'STO_DOC_CATEGORY'.
+
+  CALL FUNCTION 'ZXCAP_GET_CONSTANTS'
+    EXPORTING
+      ip_edd          = lc_rdd1636
+      ip_constant     = lc_cname
+    CHANGING
+      t_dynamic_range = gt_sto_doc_category
+    EXCEPTIONS
+      no_result       = 1
+      invalid_edd     = 2
+      not_range       = 3
+      OTHERS          = 4.
+  IF sy-subrc <> 0.
+    CLEAR gt_sto_doc_category[].
+  ENDIF.
+* End ADD:RAVULV1:19-Jun-2020:ECR201902596:TPR-22308
+
+  GET REFERENCE OF me->gt_data INTO DATA(lr_data).
+
+  me->go_view = zcl_mot_cvc_report_view=>factory( ir_data_reference = lr_data ).
+
+  SET HANDLER: me->on_start_of_selection         FOR me->go_view,
+               me->on_volume_calculation_clicked FOR me->go_view,
+               me->on_exec_calculation_clicked   FOR me->go_view,
+               me->on_create_shipment_clicked    FOR me->go_view,
+               me->on_exec_create_ship_clicked   FOR me->go_view,
+
+               me->on_hotspot_sd_doc_clicked     FOR me->go_view,
+               me->on_hotspot_shipment_clicked   FOR me->go_view,
+               me->on_hotspot_purch_doc_clicked  FOR me->go_view,
+* Begin ADD:RAVULV1:18-Mar-2020:ECR201902596
+               me->on_shipment_simulate_clicked  FOR me->go_view,
+* End ADD:RAVULV1:18-Mar-2020:ECR201902596
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+               me->on_align_routes_clicked FOR me->go_view.
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->CONVERT_WEIGHT
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_WEIGHT                      TYPE        NTGEW_15
+* | [--->] IV_UOM                         TYPE        GEWEI
+* | [<-()] RV_CONVERTED_WEIGHT            TYPE        NTGEW_15
+* | [!CX!] ZCX_MOT_CVC_REPORT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD CONVERT_WEIGHT.
+*Begin ADD:HINSBJ1:24-Oct-2019:ECR201902195
+
+  IF iv_uom EQ gc_base_weight_uom.
+    rv_converted_weight = iv_weight.
+  ELSE.
+    CALL FUNCTION 'UNIT_CONVERSION_SIMPLE'
+      EXPORTING
+        input                = iv_weight
+        no_type_check        = ' '
+        unit_in              = iv_uom
+        unit_out             = gc_base_weight_uom
+      IMPORTING
+        output               = rv_converted_weight
+      EXCEPTIONS
+        conversion_not_found = 1
+        division_by_zero     = 2
+        input_invalid        = 3
+        output_invalid       = 4
+        overflow             = 5
+        type_invalid         = 6
+        units_missing        = 7
+        unit_in_not_found    = 8
+        unit_out_not_found   = 9.
+    IF syst-subrc NE 0.
+      RAISE EXCEPTION TYPE zcx_mot_cvc_report
+        EXPORTING
+          textid       = zcx_mot_cvc_report=>weight_conversion_failed
+          g_uom_source = iv_uom
+          g_uom_target = gc_base_weight_uom.
+    ENDIF.
+  ENDIF.
+
+*End ADD:HINSBJ1:24-Oct-2019:ECR201902195
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->CREATE_SHIPMENT
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_TRANS_PLANNING_POINT        TYPE        TPLST
+* | [--->] IV_SHIPMENT_TYPE               TYPE        SHTYP
+* | [--->] IT_DELIVERIES                  TYPE        ZCL_MOT_CVC_REPORT_CNTRL=>TT_DELIVERIES
+* | [<-()] RV_SHIPMENT_NUMBER             TYPE        TKNUM
+* | [!CX!] ZCX_MOT_CVC_REPORT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD create_shipment.
+
+  DATA: l_shipment_number TYPE tknum,
+        lw_header_data    TYPE bapishipmentheader,
+        lt_item_data      TYPE STANDARD TABLE OF bapishipmentitem,
+        lt_return         TYPE bapiret2_tab.
+
+
+  lw_header_data-trans_plan_pt  = iv_trans_planning_point.
+  lw_header_data-shipment_type  = iv_shipment_type.
+
+  LOOP AT it_deliveries REFERENCE INTO DATA(lr_delivery).
+    APPEND INITIAL LINE TO lt_item_data REFERENCE INTO DATA(lr_item_data).
+    lr_item_data->delivery = lr_delivery->*.
+  ENDLOOP.
+
+  CALL FUNCTION 'BAPI_SHIPMENT_CREATE'
+    EXPORTING
+      headerdata = lw_header_data
+    IMPORTING
+      transport  = l_shipment_number
+    TABLES
+      itemdata   = lt_item_data
+      return     = lt_return.
+  IF syst-subrc EQ 0.
+    READ TABLE lt_return TRANSPORTING NO FIELDS WITH KEY type = 'E'.
+    IF syst-subrc EQ 0.
+      CALL FUNCTION 'BAPI_TRANSACTION_ROLLBACK'.
+
+      RAISE EXCEPTION TYPE zcx_mot_cvc_report
+        EXPORTING
+          textid = zcx_mot_cvc_report=>shipment_creation_failed.
+    ELSE.
+      CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'.
+
+      rv_shipment_number = l_shipment_number.
+    ENDIF.
+  ELSE.
+    RAISE EXCEPTION TYPE zcx_mot_cvc_report
+      EXPORTING
+        textid = zcx_mot_cvc_report=>shipment_creation_failed.
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->DANGEROUS_GOODS_CHECK
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IT_DELIVERIES                  TYPE        TT_DELIVERIES
+* | [<-()] RT_DG_DELIVERIES               TYPE        TT_DG_DELIVERIES
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD dangerous_goods_check.
+*Begin ADD:HEUTMJ2:26-Nov-2018:ECR201803331
+* Begin DEL:RAVULV1:28-Jul-2020:ECR201902596:TPR-22182
+*    CONSTANTS:
+*      lc_dg_group_non_dg TYPE /sctech/dg_packing_group VALUE 'NDG'.
+*
+*    DATA:
+*      lt_materials TYPE HASHED TABLE OF matnr WITH UNIQUE DEFAULT KEY.
+*
+*
+*    IF it_deliveries IS INITIAL.
+*      RETURN.
+*    ENDIF.
+*
+*
+**---Collect unique material numbers:
+*    SELECT vbeln, matnr
+*          FROM lips
+*          INTO TABLE @DATA(lt_delivery_data)
+*           FOR ALL ENTRIES IN @it_deliveries
+*        WHERE vbeln EQ @it_deliveries-table_line.
+*    IF syst-subrc NE 0.
+*      RETURN.
+*    ENDIF.
+*
+*    LOOP AT lt_delivery_data REFERENCE INTO DATA(lr_delivery_data).
+*
+*      READ TABLE lt_materials TRANSPORTING NO FIELDS
+*          WITH TABLE KEY table_line = lr_delivery_data->matnr.
+*      IF syst-subrc NE 0.
+*        INSERT lr_delivery_data->matnr INTO TABLE lt_materials.
+*      ENDIF.
+*
+*    ENDLOOP.
+*
+*
+**---Get DG info for materials which should be split a shipment level.
+*    IF lt_materials IS NOT INITIAL.
+*      SELECT /sctech/hazitem~dg_matnr, /sctech/hazitem~dg_packing_group, shipment_split
+*            FROM (            /sctech/hazitem
+*                   INNER JOIN zorf_dgpackgrp
+*                           ON /sctech/hazitem~dg_packing_group EQ zorf_dgpackgrp~dg_packing_group )
+*        INTO TABLE @DATA(lt_dg_info)
+*             FOR ALL ENTRIES IN @lt_materials
+*           WHERE /sctech/hazitem~dg_matnr EQ @lt_materials-table_line.
+*      IF syst-subrc EQ 0.
+*        SORT lt_dg_info BY dg_matnr.
+*      ENDIF.
+*    ENDIF.
+*
+*
+**---Get split for NDG materials:
+*    SELECT SINGLE shipment_split
+*          FROM zorf_dgpackgrp
+*          INTO @DATA(lv_non_dg_split)
+*         WHERE dg_packing_group EQ @lc_dg_group_non_dg.
+*
+*
+**---Collect deliveries which contain DG materials to be split:
+*    LOOP AT lt_delivery_data REFERENCE INTO lr_delivery_data.
+*
+*      READ TABLE lt_dg_info REFERENCE INTO DATA(lr_dg_info)
+*          WITH KEY dg_matnr = lr_delivery_data->matnr BINARY SEARCH.
+*      IF syst-subrc EQ 0.
+*        IF lr_dg_info->shipment_split EQ abap_true.
+*          READ TABLE rt_dg_deliveries REFERENCE INTO DATA(lr_dg_delivery)
+*              WITH TABLE KEY dg_packing_group = lr_dg_info->dg_packing_group.
+*          IF syst-subrc NE 0.
+*            INSERT VALUE #( dg_packing_group = lr_dg_info->dg_packing_group
+*                            deliveries       = VALUE #( ( lr_delivery_data->vbeln ) )   ) INTO TABLE rt_dg_deliveries.
+*          ELSE.
+*            READ TABLE lr_dg_delivery->deliveries TRANSPORTING NO FIELDS
+*                WITH TABLE KEY table_line = lr_delivery_data->vbeln.
+*            IF syst-subrc NE 0.
+*              INSERT lr_delivery_data->vbeln INTO TABLE lr_dg_delivery->deliveries.
+*            ENDIF.
+*          ENDIF.
+*        ENDIF.
+*
+*      ELSE.
+**-------Non DG material, add in case split for NDG is set:
+*        IF lv_non_dg_split EQ abap_true.
+*          READ TABLE rt_dg_deliveries REFERENCE INTO lr_dg_delivery
+*              WITH TABLE KEY dg_packing_group = lc_dg_group_non_dg.
+*          IF syst-subrc NE 0.
+*            INSERT VALUE #( dg_packing_group = lc_dg_group_non_dg
+*                            deliveries       = VALUE #( ( lr_delivery_data->vbeln ) )   ) INTO TABLE rt_dg_deliveries.
+*          ELSE.
+*            READ TABLE lr_dg_delivery->deliveries TRANSPORTING NO FIELDS
+*                WITH TABLE KEY table_line = lr_delivery_data->vbeln.
+*            IF syst-subrc NE 0.
+*              INSERT lr_delivery_data->vbeln INTO TABLE lr_dg_delivery->deliveries.
+*            ENDIF.
+*          ENDIF.
+*        ENDIF.
+*      ENDIF.
+*
+*    ENDLOOP.
+*
+*
+**---Split is only needed in case of multiple DG groups:
+*    IF lines( rt_dg_deliveries ) = 1.
+*      CLEAR:
+*        rt_dg_deliveries.
+*    ENDIF.
+* End DEL:RAVULV1:28-Jul-2020:ECR201902596:TPR-22182
+*End   ADD:HEUTMJ2:26-Nov-2018:ECR201803331
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->DANGEROUS_GOODS_CHECK_NEW
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IT_DELIVERIES                  TYPE        TT_DELIVERIES
+* | [--->] IT_Y2_FLOWS_INPUT              TYPE        TT_Y2_FLOWS
+* | [<-()] RT_DG_DELIVERIES               TYPE        TT_DG_DELIVERIES
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD dangerous_goods_check_new.
+* Begin ADD:RAVULV1:18-Mar-2020:ECR201902596
+
+  DATA : lt_dg_deliveries      TYPE tt_dg_deliveries,
+         lv_dg_relevance       TYPE abap_bool,
+         lv_dg_group_threshold TYPE adge_profl.   " ++ADD:RAVULV1:11-Mar-2021:ECR202002577:TPR-23606
+
+  CLEAR : gt_delivery_items[].                    " ++ADD:RAVULV1:25-May-2021:INC7123747
+
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+  DATA(ls_keys) = collect_keys( it_deliveries = it_deliveries
+                                it_y2_flows_input = it_y2_flows_input ).
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+
+* Begin ADD:RAVULV1:06-Aug-2020:ECR201902596:TPR-22182
+* If no dangerous goods deliveries, check can be skipped
+  IF ls_keys-gt_profl[] IS INITIAL.
+    RETURN.
+  ENDIF.
+* End ADD:RAVULV1:06-Aug-2020:ECR201902596:TPR-22182
+
+** Collect DG split matrix data
+  DATA(lt_dg_matrix) = get_dg_matrix( EXPORTING it_profl = ls_keys-gt_profl[]
+                                                it_dg_regulation = ls_keys-gt_lwdg[]
+                                                it_plants = ls_keys-gt_plants[]
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+                                                it_kunnr  = ls_keys-gt_kunnr[]
+                                                it_routes = ls_keys-gt_routes[]
+                                                it_flow = ls_keys-gt_flow[] ).
+* ADD:RAVULV1:16-Feb-2021:ECR202002579
+
+  DATA(lt_item_regulation) = ls_keys-gt_item_regulation[].
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002577
+  SORT lt_item_regulation BY vbeln profl DESCENDING.
+  DELETE ADJACENT DUPLICATES FROM lt_item_regulation COMPARING vbeln profl.
+  SORT lt_item_regulation BY cont_dg DESCENDING vbeln ASCENDING profl DESCENDING.
+
+  LOOP AT lt_item_regulation REFERENCE INTO DATA(lr_item_regulation).
+
+    READ TABLE ls_keys-gt_delivery_header REFERENCE INTO DATA(lr_delivery)
+         WITH TABLE KEY vbeln = lr_item_regulation->vbeln.
+    IF sy-subrc NE 0.
+      CONTINUE.
+    ENDIF.
+
+    IF lr_item_regulation->profl IS INITIAL.
+      DATA(lv_dg_group) = gc_dg_group_non_dg.
+    ELSE.
+      lv_dg_group = lr_item_regulation->profl.
+    ENDIF.
+
+* Begin ADD:RAVULV1:11-Mar-2021:ECR202002577:TPR-23606
+    CLEAR lv_dg_group_threshold.
+    IF ( lv_dg_group IS NOT INITIAL AND lv_dg_group IN gt_r_threshold_profl[]
+    AND gt_r_threshold_profl[] IS NOT INITIAL ) OR lr_item_regulation->profl IS INITIAL.
+      lv_dg_group_threshold = lv_dg_group.
+    ENDIF.
+* End ADD:RAVULV1:11-Mar-2021:ECR202002577:TPR-23606
+
+* First record - so it will be added as the first allowed entry
+    IF lt_dg_deliveries[] IS INITIAL.
+      INSERT VALUE #( dg_packing_group = lv_dg_group
+                      deliveries       = VALUE #( ( vbeln = lr_item_regulation->vbeln
+                                                    contdg = lr_delivery->cont_dg
+                                                    lwdg   = lr_delivery->zzdg_lwdg
+                                                    dgrel  = lr_delivery->zzdg_trans
+                                                    dggrp  = lv_dg_group_threshold ) )   " ++ADD:RAVULV1:11-Mar-2021:ECR202002577:TPR-23606
+                      profl            = VALUE #( ( sign = if_fdt_element=>gc_sign_include
+                                                    option = if_fdt_element=>gc_option_equal
+                                                    low = lv_dg_group ) ) ) INTO TABLE lt_dg_deliveries.
+      CONTINUE.
+    ENDIF.
+
+* For subsequent entries, loop on added packages to check if the item fits into the
+* corresponding package, or a new package needs to be created
+    LOOP AT lt_dg_deliveries REFERENCE INTO DATA(lr_dg_delivery).
+
+      IF lr_item_regulation->lwdg IS NOT INITIAL.
+        DATA(lv_dg_regulation) = lr_item_regulation->lwdg.
+      ELSE.
+* Begin DEL:RAVULV1:25-May-2021:INC7123747
+*        TRY.
+*            lv_dg_regulation = lr_dg_delivery->deliveries[ 1 ]-lwdg.
+*          CATCH cx_sy_itab_line_not_found.
+*        ENDTRY.
+* End DEL:RAVULV1:25-May-2021:INC7123747
+
+* Begin ADD:RAVULV1:25-May-2021:INC7123747
+* Internal table will not have many entries, so LOOP.. WHERE is not expected to cause performance issues
+* Begin DEL:RAVULV1:26-Oct-2021:ECR251958033
+*        LOOP AT lr_dg_delivery->deliveries REFERENCE INTO DATA(lr_delivery_reg) WHERE lwdg IS NOT INITIAL.
+* End DEL:RAVULV1:26-Oct-2021:ECR251958033
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+        LOOP AT lr_dg_delivery->deliveries REFERENCE INTO DATA(lr_delivery_reg).
+          CHECK lr_delivery_reg->lwdg IS NOT INITIAL.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+          lv_dg_regulation = lr_delivery_reg->lwdg.
+          EXIT.
+        ENDLOOP.
+* End ADD:RAVULV1:25-May-2021:INC7123747
+      ENDIF.
+
+* Check if the current DG group can match with all previously added DG groups
+* in the current package
+      LOOP AT lr_dg_delivery->profl REFERENCE INTO DATA(lr_dg_group).
+        IF lv_dg_group EQ lr_dg_group->low.
+          DATA(lv_dg_grp) = lv_dg_group.
+          CONTINUE.
+        ENDIF.
+
+        CLEAR lv_dg_grp.
+        DATA(ls_dg_mat_input) = VALUE ts_dg_mat_input( zgrp  = lr_dg_group->low
+                                                       lwdg  = lv_dg_regulation
+                                                       werks = lr_item_regulation->werks
+                                                       kunnr = lr_item_regulation->kunnr
+                                                       route = lr_item_regulation->route
+                                                       flow  = lr_item_regulation->flow
+                                                       zsgr  = lv_dg_group ).
+
+** Check ZORF_DG_MATRIX for the grouping criteria
+        lv_dg_grp = get_dg_group( EXPORTING it_dg_matrix    = lt_dg_matrix
+                                            is_dg_mat_input = ls_dg_mat_input ).
+
+        IF lv_dg_grp IS INITIAL.
+          EXIT.
+        ENDIF.
+
+      ENDLOOP.
+
+      IF lv_dg_grp IS INITIAL.
+        CONTINUE.
+      ENDIF.
+
+* If current DG group matches with all previous groups, add it to the existing
+* list of DG groups
+      IF lv_dg_grp IS NOT INITIAL.
+        IF lv_dg_group NOT IN lr_dg_delivery->profl[].
+          APPEND VALUE #( sign = if_fdt_element=>gc_sign_include
+                          option = if_fdt_element=>gc_option_equal
+                          low = lv_dg_group ) TO lr_dg_delivery->profl.
+        ENDIF.
+* Current delivery record can be added to current package
+
+        INSERT VALUE #( vbeln = lr_item_regulation->vbeln
+                        contdg = lr_delivery->cont_dg
+                        lwdg   = lr_delivery->zzdg_lwdg
+                        dgrel  = lr_delivery->zzdg_trans
+                        dggrp  = lv_dg_group_threshold ) INTO TABLE lr_dg_delivery->deliveries.   " ++ADD:RAVULV1:11-Mar-2021:ECR202002577:TPR-23606
+
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+* Below sequential read is not adjusted, as the internal table is not expected to have more than 10 entries
+* and does not cause any performance issues
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+        IF lr_delivery->cont_dg IS INITIAL AND line_exists( lr_dg_delivery->deliveries[ contdg = abap_true ] ).
+          lr_dg_delivery->combi = abap_true.
+        ENDIF.
+
+        EXIT.
+      ENDIF.
+    ENDLOOP.
+
+* If current DG group could not be matched with previous DG groups, it needs to be
+* added as a new package
+    IF lv_dg_grp IS INITIAL.
+      INSERT VALUE #( dg_packing_group = lv_dg_group
+                      deliveries       = VALUE #( ( vbeln = lr_item_regulation->vbeln
+                                                    contdg = lr_delivery->cont_dg
+                                                    lwdg   = lv_dg_regulation
+                                                    dgrel  = lr_delivery->zzdg_trans    " ++TPR-22182
+                                                    dggrp  = lv_dg_group_threshold ) )  " ++ADD:RAVULV1:11-Mar-2021:ECR202002577:TPR-23606
+                      profl            = VALUE #( ( sign = if_fdt_element=>gc_sign_include
+                                                    option = if_fdt_element=>gc_option_equal
+                                                    low = lv_dg_group ) ) ) INTO TABLE lt_dg_deliveries.
+
+    ENDIF.
+  ENDLOOP.
+* End ADD:RAVULV1:16-Feb-2021:ECR202002577
+*  INSERT LINES OF lt_dg_deliveries INTO TABLE rt_dg_deliveries.        " --DEL:RAVULV1:26-Oct-2021:ECR251958033
+  rt_dg_deliveries[] = lt_dg_deliveries[].                              " ++ADD:RAVULV1:26-Oct-2021:ECR251958033
+  CLEAR lt_dg_deliveries.
+
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+* Below sequential read is not adjusted, as the internal table is not expected to have more than 10 entries
+* and does not cause any performance issues
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+* Begin ADD:RAVULV1:29-Jul-2020:ECR201902596:TPR-22182
+  LOOP AT rt_dg_deliveries REFERENCE INTO lr_dg_delivery WHERE combi IS NOT INITIAL.
+    DATA(ls_threshold_check) = check_above_threshold( it_delivery_header = ls_keys-gt_delivery_header
+                                                      it_delivery_items  = ls_keys-gt_delivery_item
+                                                      it_deliveries      = lr_dg_delivery->deliveries ).
+    lr_dg_delivery->threshold = ls_threshold_check-threshold.
+  ENDLOOP.
+* End ADD:RAVULV1:29-Jul-2020:ECR201902596:TPR-22182
+
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+* Below sequential read is not adjusted, as the internal table is not expected to have more than 10 entries
+* and does not cause any performance issues
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+** If all deliveries are grouped into one DG group, there is no issue
+** with the DG check
+  IF lines( rt_dg_deliveries ) EQ 1
+  AND NOT line_exists( rt_dg_deliveries[ threshold = abap_true ] ).  " ++ADD:RAVULV1:29-Jul-2020:ECR201902596:TPR-22182
+    CLEAR:
+      rt_dg_deliveries.
+* Begin ADD:RAVULV1:25-May-2021:INC7123747
+  ELSE.
+    gt_delivery_items[] = ls_keys-gt_delivery_item[].
+* End ADD:RAVULV1:25-May-2021:INC7123747
+  ENDIF.
+* End ADD:RAVULV1:18-Mar-2020:ECR201902596
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->DETERMINE_PACKAGES
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IT_DELIVERIES                  TYPE        TT_DELIVERIES
+* | [--->] IT_Y2_FLOWS_INPUT              TYPE        TT_Y2_FLOWS
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD determine_packages.
+*Begin ADD:RAVULV1:18-Mar-2020:ECR201902596
+
+  DATA:
+    lt_displaytable TYPE STANDARD TABLE OF tdline.
+
+  CONSTANTS  : lc_comma  TYPE char1 VALUE ',',
+               lc_colon  TYPE char1 VALUE ':',
+               lc_hyphen TYPE char1 VALUE '-'.
+
+  DATA : lv_number    TYPE i VALUE 1,
+         lv_char      TYPE char3,
+         lv_profiles  TYPE string,
+         lv_dg_status TYPE string.
+
+** Check only in case deliveries have been selected:
+  IF it_deliveries IS INITIAL.
+    RETURN.
+  ENDIF.
+
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+** Get the individual Key values
+  DATA(ls_keys) = collect_keys( it_deliveries     = it_deliveries
+                                it_y2_flows_input = it_y2_flows_input ).
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+
+** Get the ZORF_DG_MATRIX entries
+  DATA(lt_dg_matrix) = get_dg_matrix( it_profl         = ls_keys-gt_profl[]
+                                      it_dg_regulation = ls_keys-gt_lwdg[]
+                                      it_plants        = ls_keys-gt_plants[]
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+                                      it_kunnr         = ls_keys-gt_kunnr[]
+                                      it_routes        = ls_keys-gt_routes[]
+                                      it_flow          = ls_keys-gt_flow[] ).
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+
+** Group the deliveries based on header criteria and ZORF_DG_MATRIX grouping criteria
+  DATA(lt_delivery_group) = group_deliveries( is_keys      = ls_keys
+                                              it_dg_matrix = lt_dg_matrix ).
+
+** Loop at the list of packages to perform threshold checks
+* Begin ADD:RAVULV1:29-Jul-2020:ECR201902596:TPR-22182
+  LOOP AT lt_delivery_group REFERENCE INTO DATA(lr_delivery_group) .
+    DATA(ls_threshold_check) = check_above_threshold( it_delivery_header = ls_keys-gt_delivery_header
+                                                      it_delivery_items  = ls_keys-gt_delivery_item
+                                                      it_deliveries      = lr_delivery_group->deliveries ).
+    IF lr_delivery_group->dgrel IS INITIAL.
+      lr_delivery_group->dgrel = ls_threshold_check-dgrel.
+    ENDIF.
+    lr_delivery_group->threshold = ls_threshold_check-threshold.
+  ENDLOOP.
+
+** Check the non-DG deliveries for adding to existing packages or add a new package
+  add_ndg_deliveries_to_package( EXPORTING is_keys           = ls_keys
+                                           it_dg_matrix      = lt_dg_matrix
+                                 CHANGING  ct_delivery_group = lt_delivery_group ).
+* End ADD:RAVULV1:29-Jul-2020:ECR201902596:TPR-22182
+
+** Prepare data for shipment simulation results display
+  DATA(lv_lines) = lines( lt_delivery_group ).
+  DATA(lt_items) = ls_keys-gt_delivery_item[].
+  SORT lt_items BY vbeln profl.
+  DELETE ADJACENT DUPLICATES FROM lt_items COMPARING vbeln profl.
+
+  APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO DATA(lr_displayline).
+  lr_displayline->* = 'Total Number of shipments proposed :'(m05) && | | && lv_lines.
+
+  APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+  lr_displayline->* = ` `.
+
+** Loop at all the delivery groups
+  LOOP AT lt_delivery_group REFERENCE INTO lr_delivery_group.
+    lv_char = lv_number.
+
+** If the package has only non-DG deliveries
+    IF lr_delivery_group->dggrp EQ gc_dg_group_non_dg.  " ++ADD:RAVULV1:28-Jul-2020:ECR201902596:TPR-22182
+      lv_dg_status = 'Non-DG Package'(m10).
+** If deliveries are DG
+    ELSE.
+      IF lr_delivery_group->dgrel IS NOT INITIAL.
+        lv_dg_status = 'DG-Relevant Package'(m06).
+      ELSE.
+        lv_dg_status = 'Below Threshold'(m09).
+      ENDIF.
+    ENDIF.
+
+** Display count of proposed number of packages
+    APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+    lr_displayline->* = 'Package'(m07) && | | && lv_char && lc_colon && | | && lv_dg_status.
+    APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+    lr_displayline->* = '----------'(m08).
+
+** Now display the list of deliveries under a package, followed by the distinct
+** DG profiles/groups for the deliveries separated by comma
+    LOOP AT lr_delivery_group->deliveries REFERENCE INTO DATA(lr_deliveries).
+      CLEAR lv_profiles.
+      READ TABLE lt_items TRANSPORTING NO FIELDS
+           WITH KEY vbeln = lr_deliveries->vbeln BINARY SEARCH.
+      IF sy-subrc EQ 0.
+        DATA(lv_tabix) = sy-tabix.
+        LOOP AT lt_items REFERENCE INTO DATA(lr_items) FROM lv_tabix.
+          IF lr_items->vbeln NE lr_deliveries->vbeln.
+            EXIT.
+          ENDIF.
+          IF lr_items->profl IS INITIAL.
+            DATA(lv_profl) = gc_dg_group_non_dg.
+          ELSE.
+            lv_profl = lr_items->profl.
+          ENDIF.
+          IF lv_profiles IS NOT INITIAL.
+            lv_profiles = lv_profiles && lc_comma && | | && lv_profl.
+          ELSE.
+            lv_profiles = lv_profl.
+          ENDIF.
+          CLEAR lv_profl.
+        ENDLOOP.
+      ENDIF.
+      APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+* Begin ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+      READ TABLE ls_keys-gt_delivery_header REFERENCE INTO DATA(lr_delivery)
+           WITH TABLE KEY vbeln = lr_deliveries->vbeln.
+      IF sy-subrc EQ 0.
+        lr_displayline->* = lr_deliveries->vbeln && | | && '(' && lr_delivery->vstel && ')' &&
+                            | | && lc_hyphen && | | && lv_profiles.
+      ENDIF.
+* End ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+    ENDLOOP.
+    APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+    lr_displayline->* = ` `.
+    ADD 1 TO lv_number.
+
+    CLEAR lv_dg_status.
+  ENDLOOP.
+
+** Display the information in a standard popup:
+  CALL FUNCTION 'ZMP_POPUP_WITH_TABLE_DISPLAY'
+    EXPORTING
+      endpos_col   = 80
+      endpos_row   = 20
+      startpos_col = 5
+      startpos_row = 5
+      titletext    = TEXT-t02    " Shipment Simulation Results
+    TABLES
+      valuetab     = lt_displaytable
+    EXCEPTIONS
+      break_off    = 1.
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+  IF sy-subrc IS NOT INITIAL.
+    CLEAR : lt_displaytable[].
+  ENDIF.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+
+*End ADD:RAVULV1:18-Mar-2020:ECR201902596
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->DISPLAY_INFORMATION
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IS_CHECK_VALUESX               TYPE        TS_CHECK_VALUESX
+* | [--->] IT_DELIVERIES                  TYPE        TT_DELIVERIES
+* | [--->] IT_DG_DELIVERIES               TYPE        TT_DG_DELIVERIES
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD display_information.
+*Begin ADD:HEUTMJ2:26-Nov-2018:ECR201803331
+
+    DATA:
+      lt_displaytable TYPE STANDARD TABLE OF tdline,
+* Begin ADD:RAVULV1:25-May-2021:INC7123747
+      lv_group_count  TYPE i,
+      lv_dg_profiles  TYPE char40.
+* End ADD:RAVULV1:25-May-2021:INC7123747
+
+    IF is_check_valuesx IS NOT INITIAL.
+      APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO DATA(lr_displayline).
+      lr_displayline->* = TEXT-m01.
+
+      IF is_check_valuesx-kunwe EQ abap_true.
+        APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+        lr_displayline->* = TEXT-e01.    "Shipto deviates
+      ENDIF.
+
+      IF is_check_valuesx-route EQ abap_true.
+        APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+        lr_displayline->* = TEXT-e02 && TEXT-m15.    "Route deviates  " ++ADD:RAVULV1:16-Feb-2021:ECR202002578
+      ENDIF.
+
+      IF is_check_valuesx-vsbed EQ abap_true.
+        APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+        lr_displayline->* = TEXT-e03.    "Shipping condition deviates
+      ENDIF.
+
+      IF is_check_valuesx-inco1 EQ abap_true.
+        APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+        lr_displayline->* = TEXT-e04.    "Incoterm 1 deviates
+      ENDIF.
+
+      IF is_check_valuesx-inco2 EQ abap_true.
+        APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+        lr_displayline->* = TEXT-e05.    "Incoterm 2 deviates
+      ENDIF.
+
+      IF is_check_valuesx-zterm EQ abap_true.
+        APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+        lr_displayline->* = TEXT-e06.    "Payment term deviates
+      ENDIF.
+    ENDIF.
+
+
+    IF it_deliveries IS NOT INITIAL.
+      IF lt_displaytable IS NOT INITIAL.
+*-------Table contains already information, insert blank line:
+        APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+        lr_displayline->* = ` `.
+      ENDIF.
+
+*-----Insert message:
+      APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+      lr_displayline->* = TEXT-m02.
+
+
+*-----Insert blocked deliveries:
+      LOOP AT it_deliveries REFERENCE INTO DATA(lr_delivery).
+
+        APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+        lr_displayline->* = '-' && lr_delivery->*.
+
+      ENDLOOP.
+    ENDIF.
+
+
+    IF it_dg_deliveries IS NOT INITIAL.
+      IF lt_displaytable IS NOT INITIAL.
+*-------Table contains already information, insert blank line:
+        APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+        lr_displayline->* = ` `.
+      ENDIF.
+
+*-----Insert message:
+      APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+      lr_displayline->* = TEXT-m03.
+
+      IF lines( it_dg_deliveries ) GT 1.  " ++ADD:RAVULV1:29-Jul-2020:ECR201902596:TPR-22182
+        APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+        lr_displayline->* = TEXT-m04.
+
+* Begin ADD:RAVULV1:29-Jul-2020:ECR201902596:TPR-22182
+*-----Insert DG deliveries:
+* Begin ADD:RAVULV1:25-May-2021:INC7123747
+        DATA(lt_delivery_items) = gt_delivery_items[].
+        SORT lt_delivery_items BY vbeln profl.
+        DELETE ADJACENT DUPLICATES FROM lt_delivery_items COMPARING vbeln profl.
+* End ADD:RAVULV1:25-May-2021:INC7123747
+        LOOP AT it_dg_deliveries REFERENCE INTO DATA(lr_dg_delivery).
+* Begin ADD:RAVULV1:25-May-2021:INC7123747
+          ADD 1 TO lv_group_count.
+          APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+          lr_displayline->* = `Group` && | | && lv_group_count && ':'.
+* End ADD:RAVULV1:25-May-2021:INC7123747
+          LOOP AT lr_dg_delivery->deliveries REFERENCE INTO DATA(lr_delivery_info).
+* Begin ADD:RAVULV1:25-May-2021:INC7123747
+            CLEAR : lv_dg_profiles.
+            LOOP AT lt_delivery_items REFERENCE INTO DATA(lr_item)
+                 WHERE vbeln EQ lr_delivery_info->vbeln.
+              IF lr_item->profl IS INITIAL.
+                DATA(lv_profl) = gc_dg_group_non_dg.
+              ELSE.
+                lv_profl = lr_item->profl.
+              ENDIF.
+              IF lv_dg_profiles IS INITIAL.
+                lv_dg_profiles = lv_profl.
+              ELSE.
+                lv_dg_profiles = lv_dg_profiles && `,` && | | && lv_profl.
+              ENDIF.
+              CLEAR : lv_profl.
+            ENDLOOP.
+* End ADD:RAVULV1:25-May-2021:INC7123747
+            APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+            lr_displayline->* = '-' && lr_delivery_info->vbeln && ` - ` && lv_dg_profiles.   " ++ADD:RAVULV1:25-May-2021:INC7123747
+          ENDLOOP.
+        ENDLOOP.
+      ENDIF.
+
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+* Below sequential read is not adjusted, as the internal table is not expected to have more than 10 entries
+* and does not cause any performance issues
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+*-----Insert DG deliveries exceeding thresholds (DG and non-DG combination):
+      LOOP AT it_dg_deliveries REFERENCE INTO lr_dg_delivery WHERE threshold IS NOT INITIAL.
+        APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+        lr_displayline->* = TEXT-m11.
+
+        LOOP AT lr_dg_delivery->deliveries REFERENCE INTO lr_delivery_info.
+          IF lr_delivery_info->dggrp IS NOT INITIAL.                         " ++ADD:RAVULV1:12-Mar-2021:ECR202002577:TPR-23606
+            APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_displayline.
+            lr_displayline->* = '-' && lr_delivery_info->vbeln && ` - ` && lr_delivery_info->dggrp.
+          ENDIF.                                                             " ++ADD:RAVULV1:12-Mar-2021:ECR202002577:TPR-23606
+        ENDLOOP.
+      ENDLOOP.
+* End ADD:RAVULV1:29-Jul-2020:ECR201902596:TPR-22182
+
+    ENDIF.
+
+*---Display the information in a standard popup:
+    CALL FUNCTION 'ZMP_POPUP_WITH_TABLE_DISPLAY'
+      EXPORTING
+        endpos_col   = 80
+        endpos_row   = 15
+        startpos_col = 5
+        startpos_row = 5
+        titletext    = TEXT-t01
+      TABLES
+        valuetab     = lt_displaytable
+      EXCEPTIONS
+        break_off    = 1.
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+    IF sy-subrc IS NOT INITIAL.
+      CLEAR : lt_displaytable[].
+    ENDIF.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+
+*End   ADD:HEUTMJ2:26-Nov-2018:ECR201803331
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->DISPLAY_ROUTE_ALIGNMENT_LOG
+* +-------------------------------------------------------------------------------------------------+
+* | [<-()] RV_ERROR                       TYPE        ABAP_BOOL
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD display_route_alignment_log.
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+
+  CLEAR rv_error.
+
+* Cancel action chosen by user on pop up
+  IF gv_route_align_processed IS INITIAL.
+    rv_error = abap_true.
+    RETURN.
+  ENDIF.
+
+* If any errors from route alignment, display the results
+  IF gt_displaytable[] IS NOT INITIAL.
+    CALL FUNCTION 'ZMP_POPUP_WITH_TABLE_DISPLAY'
+      EXPORTING
+        endpos_col   = 100
+        endpos_row   = 15
+        startpos_col = 5
+        startpos_row = 5
+        titletext    = 'Route Alignment Errors'(t03)
+      TABLES
+        valuetab     = gt_displaytable
+      EXCEPTIONS
+        break_off    = 1
+        OTHERS       = 2.
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+    IF sy-subrc IS NOT INITIAL.
+      CLEAR : gt_displaytable[].
+    ENDIF.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+    rv_error = abap_true.
+    RETURN.
+  ELSE.
+    MESSAGE i063 DISPLAY LIKE 'W'.
+  ENDIF.
+
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->EXECUTE_CHECKS
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IT_DELIVERIES                  TYPE        TT_DELIVERIES
+* | [--->] IT_Y2_FLOWS_INPUT              TYPE        TT_Y2_FLOWS
+* | [<-()] RV_BOOL                        TYPE        ABAP_BOOL
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD execute_checks.
+*Begin ADD:HEUTMJ2:26-Nov-2018:ECR201803331
+
+    CONSTANTS:
+      lc_posnr_0 TYPE posnr VALUE IS INITIAL.
+
+    DATA:
+      ls_check_valuesx        TYPE ts_check_valuesx,
+      ls_values_1st_delivery  TYPE ts_check_values,
+      ls_values_this_delivery TYPE ts_check_values,
+      lt_delivery_data        TYPE HASHED TABLE OF ts_delivery_data WITH UNIQUE KEY vbeln,
+      lt_deliveries           TYPE tt_deliveries,
+      lt_sales_orders         TYPE HASHED TABLE OF vbeln_va WITH UNIQUE DEFAULT KEY,
+      lt_sales_order_info     TYPE HASHED TABLE OF ts_sales_order_info WITH UNIQUE KEY vbeln,
+      lv_non_route_deviate    TYPE abap_bool.   " ++ADD:RAVULV1:16-Feb-2021:ECR202002578
+
+
+*---Check only in case deliveries have been selected:
+    IF it_deliveries IS INITIAL.
+      RETURN.
+    ENDIF.
+
+
+*---Collect preceding sales orders:
+    SELECT vbeln, vgbel,
+           vgtyp             " ++ADD:RAVULV1:19-Jun-2020:ECR201902596:TPR-22038
+          FROM lips
+          INTO TABLE @DATA(lt_preceding_orders)
+           FOR ALL ENTRIES IN @it_deliveries
+         WHERE vbeln EQ @it_deliveries-table_line.
+    IF syst-subrc EQ 0.
+*-----We only have deliveries with
+      SORT lt_preceding_orders BY vbeln.
+
+      LOOP AT lt_preceding_orders REFERENCE INTO DATA(lr_preceding_order).
+
+        READ TABLE lt_sales_orders TRANSPORTING NO FIELDS
+            WITH TABLE KEY table_line = lr_preceding_order->vgbel.
+        IF syst-subrc NE 0.
+          INSERT lr_preceding_order->vgbel INTO TABLE lt_sales_orders.
+        ENDIF.
+      ENDLOOP.
+
+    ENDIF.
+
+
+*---Get sales order data:
+    IF lt_sales_orders IS NOT INITIAL.
+      SELECT vbeln zterm
+            FROM vbkd
+            INTO TABLE lt_sales_order_info
+             FOR ALL ENTRIES IN lt_sales_orders
+           WHERE vbeln EQ lt_sales_orders-table_line AND
+                 posnr EQ lc_posnr_0.
+    ENDIF.
+
+
+*---Get delivery data:
+    SELECT vbeln kunnr vsbed route inco1 inco2
+          FROM likp
+          INTO TABLE lt_delivery_data
+           FOR ALL ENTRIES IN it_deliveries
+         WHERE vbeln EQ it_deliveries-table_line.
+
+
+*---Check all deliveries:
+    LOOP AT it_deliveries REFERENCE INTO DATA(lr_delivery).
+
+      READ TABLE lt_delivery_data REFERENCE INTO DATA(lr_delivery_data)
+          WITH TABLE KEY vbeln = lr_delivery->*.
+      IF syst-subrc NE 0.
+*-------Impossible:
+        CONTINUE.
+      ENDIF.
+
+      READ TABLE lt_preceding_orders REFERENCE INTO lr_preceding_order
+          WITH KEY vbeln = lr_delivery->* BINARY SEARCH.
+      IF syst-subrc NE 0.
+*-------Impossible:
+        CONTINUE.
+      ENDIF.
+
+      READ TABLE lt_sales_order_info REFERENCE INTO DATA(lr_sales_order_info)
+          WITH TABLE KEY vbeln = lr_preceding_order->vgbel.
+      IF syst-subrc NE 0.
+* Begin ADD:RAVULV1:19-Jun-2020:ECR201902596:TPR-22038
+        IF lr_preceding_order->vgtyp NOT IN gt_sto_doc_category[]
+        OR gt_sto_doc_category[] IS INITIAL.
+          CONTINUE.
+        ENDIF.
+      ELSE.
+        DATA(lv_zterm) = lr_sales_order_info->zterm.
+* End ADD:RAVULV1:19-Jun-2020:ECR201902596:TPR-22038
+      ENDIF.
+
+      IF ls_values_1st_delivery IS INITIAL.
+*-------First delivery is leading:
+        ls_values_1st_delivery-kunwe = lr_delivery_data->kunwe.
+        ls_values_1st_delivery-vsbed = lr_delivery_data->vsbed.
+        ls_values_1st_delivery-route = lr_delivery_data->route.
+        ls_values_1st_delivery-inco1 = lr_delivery_data->inco1.
+        ls_values_1st_delivery-inco2 = lr_delivery_data->inco2.
+        ls_values_1st_delivery-zterm = lv_zterm.  " ++ADD:RAVULV1:19-Jun-2020:ECR201902596:TPR-22038
+
+      ELSE.
+*-------Get the check values for this delivery:
+        ls_values_this_delivery-kunwe = lr_delivery_data->kunwe.
+        ls_values_this_delivery-vsbed = lr_delivery_data->vsbed.
+        ls_values_this_delivery-route = lr_delivery_data->route.
+        ls_values_this_delivery-inco1 = lr_delivery_data->inco1.
+        ls_values_this_delivery-inco2 = lr_delivery_data->inco2.
+        ls_values_this_delivery-zterm = lv_zterm. " ++ADD:RAVULV1:19-Jun-2020:ECR201902596:TPR-22038
+
+*-------Check if the values match:
+        IF ls_values_1st_delivery NE ls_values_this_delivery.
+*---------Set which fields deviate:
+          IF ls_values_1st_delivery-kunwe NE ls_values_this_delivery-kunwe.
+            ls_check_valuesx-kunwe = abap_true.
+            lv_non_route_deviate = abap_true.     " ++ADD:RAVULV1:16-Feb-2021:ECR202002578
+          ENDIF.
+
+          IF ls_values_1st_delivery-zterm NE ls_values_this_delivery-zterm.
+            ls_check_valuesx-zterm = abap_true.
+            lv_non_route_deviate = abap_true.     " ++ADD:RAVULV1:16-Feb-2021:ECR202002578
+          ENDIF.
+
+          IF ls_values_1st_delivery-vsbed NE ls_values_this_delivery-vsbed.
+            ls_check_valuesx-vsbed = abap_true.
+            lv_non_route_deviate = abap_true.     " ++ADD:RAVULV1:16-Feb-2021:ECR202002578
+          ENDIF.
+
+          IF ls_values_1st_delivery-route NE ls_values_this_delivery-route.
+            ls_check_valuesx-route = abap_true.
+          ENDIF.
+
+          IF ls_values_1st_delivery-inco1 NE ls_values_this_delivery-inco1.
+            ls_check_valuesx-inco1 = abap_true.
+            lv_non_route_deviate = abap_true.     " ++ADD:RAVULV1:16-Feb-2021:ECR202002578
+          ENDIF.
+
+          IF ls_values_1st_delivery-inco2 NE ls_values_this_delivery-inco2.
+            ls_check_valuesx-inco2 = abap_true.
+            lv_non_route_deviate = abap_true.     " ++ADD:RAVULV1:16-Feb-2021:ECR202002578
+          ENDIF.
+
+        ENDIF.
+      ENDIF.
+
+      CLEAR lv_zterm.   " ++ADD:RAVULV1:19-Jun-2020:ECR201902596:TPR-22038
+
+*-----Check for GTS blocks:
+      IF zcl_vision_utilities=>check_gts_block_outb_delivery( iv_delivery = lr_delivery->* ).
+
+*-------Collect deliveries with GTS blocks:
+        READ TABLE lt_deliveries TRANSPORTING NO FIELDS
+            WITH TABLE KEY table_line = lr_delivery->*.
+        IF syst-subrc NE 0.
+          INSERT lr_delivery->* INTO TABLE lt_deliveries.
+        ENDIF.
+      ENDIF.
+    ENDLOOP.
+
+*---Dangerous goods check:
+*    DATA(lt_dg_deliveries) = dangerous_goods_check( it_deliveries ).     " --DEL:RAVULV1:18-Mar-2020:ECR201902596
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+    DATA(lt_dg_deliveries) = dangerous_goods_check_new( it_deliveries = it_deliveries
+                                                        it_y2_flows_input = it_y2_flows_input ).
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+
+*---Show errors in popup:
+    IF ls_check_valuesx IS NOT INITIAL AND lv_non_route_deviate IS INITIAL
+    AND lt_deliveries IS INITIAL AND lt_dg_deliveries IS INITIAL.
+      RETURN.
+    ENDIF.
+
+    IF ls_check_valuesx IS NOT INITIAL OR
+       lt_deliveries    IS NOT INITIAL OR
+       lt_dg_deliveries IS NOT INITIAL.
+
+      rv_bool = abap_true.
+
+      display_information( is_check_valuesx = ls_check_valuesx
+                           it_deliveries    = lt_deliveries
+                           it_dg_deliveries = lt_dg_deliveries ).
+    ENDIF.
+
+*End   ADD:HEUTMJ2:26-Nov-2018:ECR201803331
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->GET_DG_GROUP
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IS_DG_MAT_INPUT                TYPE        TS_DG_MAT_INPUT
+* | [--->] IT_DG_MATRIX                   TYPE        TT_DG_MATRIX
+* | [<-()] RV_DG_GROUP                    TYPE        ADGE_PROFL
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD get_dg_group.
+* Begin ADD:RAVULV1:18-Mar-2020:ECR201902596
+
+** Get the exact matching entry from the ZORF_DG_MATRIX entries
+  DATA : lt_r_werks  TYPE range_t_werks_d,
+         lt_r_lwdg   TYPE RANGE OF thme_lwdg,
+* Begin ADD:RAVULV1:04-Mar-2021:ECR202002579
+         lt_r_kunnr  TYPE ztt_r_kunnr,
+         lt_r_routes TYPE ztt_r_route,
+* End ADD:RAVULV1:04-Mar-2021:ECR202002579
+* Begin ADD:RAVULV1:04-Mar-2022:INC8076898
+         lt_r_zgrp   TYPE RANGE OF zde_source_grp,
+         lt_r_zsgr   TYPE RANGE OF zde_split_grp.
+* End ADD:RAVULV1:04-Mar-2022:INC8076898
+
+  CONSTANTS : lc_dg_group_non_dg TYPE adge_profl VALUE 'NDG'.
+
+  APPEND INITIAL LINE TO lt_r_werks REFERENCE INTO DATA(lr_werks).
+  lr_werks->sign = if_fdt_element=>gc_sign_include.
+  lr_werks->option = if_fdt_element=>gc_option_equal.
+  lr_werks->low = is_dg_mat_input-werks.
+  APPEND INITIAL LINE TO lt_r_werks REFERENCE INTO lr_werks.
+  lr_werks->sign = if_fdt_element=>gc_sign_include.
+  lr_werks->option = if_fdt_element=>gc_option_equal.
+
+  APPEND INITIAL LINE TO lt_r_lwdg REFERENCE INTO DATA(lr_lwdg).
+  lr_lwdg->sign = if_fdt_element=>gc_sign_include.
+  lr_lwdg->option = if_fdt_element=>gc_option_equal.
+  lr_lwdg->low = is_dg_mat_input-lwdg.
+
+* Begin ADD:RAVULV1:04-Mar-2021:ECR202002579
+  APPEND INITIAL LINE TO lt_r_kunnr REFERENCE INTO DATA(lr_kunnr).
+  lr_kunnr->sign = if_fdt_element=>gc_sign_include.
+  lr_kunnr->option = if_fdt_element=>gc_option_equal.
+  lr_kunnr->low = is_dg_mat_input-kunnr.
+  APPEND INITIAL LINE TO lt_r_kunnr REFERENCE INTO lr_kunnr.
+  lr_kunnr->sign = if_fdt_element=>gc_sign_include.
+  lr_kunnr->option = if_fdt_element=>gc_option_equal.
+
+  APPEND INITIAL LINE TO lt_r_routes REFERENCE INTO DATA(lr_route).
+  lr_route->sign = if_fdt_element=>gc_sign_include.
+  lr_route->option = if_fdt_element=>gc_option_equal.
+  lr_route->low = is_dg_mat_input-route.
+  APPEND INITIAL LINE TO lt_r_routes REFERENCE INTO lr_route.
+  lr_route->sign = if_fdt_element=>gc_sign_include.
+  lr_route->option = if_fdt_element=>gc_option_equal.
+* End ADD:RAVULV1:04-Mar-2021:ECR202002579
+  CLEAR rv_dg_group.
+
+* Begin ADD:RAVULV1:04-Mar-2022:INC8076898
+  CLEAR : lt_r_zgrp[], lt_r_zsgr[].
+  lt_r_zgrp = VALUE #( sign = if_fdt_element=>gc_sign_include
+                       option = if_fdt_element=>gc_option_equal
+                     ( low = is_dg_mat_input-zgrp ) ( low = is_dg_mat_input-zsgr ) ).
+
+  lt_r_zsgr = VALUE #( sign = if_fdt_element=>gc_sign_include
+                       option = if_fdt_element=>gc_option_equal
+                     ( low = is_dg_mat_input-zsgr ) ( low = is_dg_mat_input-zgrp ) ).
+* End ADD:RAVULV1:04-Mar-2022:INC8076898
+
+  LOOP AT it_dg_matrix REFERENCE INTO DATA(lr_dg_matrix)
+       WHERE zgrp IN lt_r_zgrp[]                   " ++ADD:RAVULV1:04-Mar-2022:INC8076898
+       AND   lwdg IN lt_r_lwdg
+       AND   werks IN lt_r_werks
+       AND   doctype IN gt_r_doctype[]             " ++ADD:RAVULV1:26-Oct-2021:ECR251958033
+* Begin ADD:RAVULV1:04-Mar-2021:ECR202002579
+       AND   kunnr IN lt_r_kunnr
+       AND   route IN lt_r_routes
+* End ADD:RAVULV1:04-Mar-2021:ECR202002579
+       AND   flow = is_dg_mat_input-flow
+       AND   zsgr IN lt_r_zsgr[].                  " ++ADD:RAVULV1:04-Mar-2022:INC8076898
+    rv_dg_group = lr_dg_matrix->zgrp.
+    EXIT.
+  ENDLOOP.
+
+* End ADD:RAVULV1:18-Mar-2020:ECR201902596
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->GET_DG_MATRIX
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IT_PROFL                       TYPE        TT_R_PROFL
+* | [--->] IT_DG_REGULATION               TYPE        TT_R_LWDG
+* | [--->] IT_PLANTS                      TYPE        RANGE_T_WERKS_D
+* | [--->] IT_KUNNR                       TYPE        ZTT_R_KUNNR
+* | [--->] IT_ROUTES                      TYPE        ZTT_R_ROUTE
+* | [--->] IT_FLOW                        TYPE        TT_R_FLOW
+* | [<-()] RT_DG_MATRIX                   TYPE        TT_DG_MATRIX
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD get_dg_matrix.
+* Begin ADD:RAVULV1:18-Mar-2020:ECR201902596
+
+  CLEAR rt_dg_matrix.
+
+  IF it_profl[] IS INITIAL.
+    RETURN.
+  ENDIF.
+
+** Get Data from ZORF_DG_MATRIX for the DG profiles on the delivery items
+  SELECT * FROM zorf_dg_matrix
+           INTO TABLE @DATA(lt_dg_matrix)
+           WHERE zgrp  IN @it_profl[]
+           AND   lwdg  IN @it_dg_regulation[]
+           AND   werks IN @it_plants[]
+           AND   doctype IN @gt_r_doctype[]                                " ++ADD:RAVULV1:26-Oct-2021:ECR251958033
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+           AND   kunnr IN @it_kunnr[]
+           AND   route IN @it_routes[]
+           AND   flow  IN @it_flow[].
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+  IF sy-subrc EQ 0.
+    SORT lt_dg_matrix BY zgrp lwdg DESCENDING werks DESCENDING
+                         doctype DESCENDING                                 " ++ADD:RAVULV1:26-Oct-2021:ECR251958033
+                         kunnr DESCENDING route DESCENDING flow DESCENDING. " ++ADD:RAVULV1:16-Feb-2021:ECR202002579
+    INSERT LINES OF lt_dg_matrix INTO TABLE rt_dg_matrix.
+  ENDIF.
+
+* End ADD:RAVULV1:18-Mar-2020:ECR201902596
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->GET_ORDER_TYPE
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IT_EBELN                       TYPE        TT_EBELN
+* | [--->] IT_VBELN                       TYPE        TT_VBELN
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD get_order_type.
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+
+  CLEAR gv_doc_type.
+
+  IF it_ebeln[] IS NOT INITIAL AND it_vbeln[] IS INITIAL.
+    SELECT DISTINCT bsart
+           FROM ekko
+           FOR ALL ENTRIES IN @it_ebeln
+           WHERE ebeln EQ @it_ebeln-table_line
+           INTO TABLE @DATA(lt_bsart).
+    IF sy-subrc IS INITIAL AND lines( lt_bsart[] ) EQ 1.
+      gv_doc_type = lt_bsart[ 1 ]-bsart.
+    ENDIF.
+  ENDIF.
+
+  IF it_ebeln[] IS INITIAL AND it_vbeln[] IS NOT INITIAL.
+    SELECT DISTINCT auart
+           FROM vbak
+           FOR ALL ENTRIES IN @it_vbeln
+           WHERE vbeln EQ @it_vbeln-table_line
+           INTO TABLE @DATA(lt_auart).
+    IF sy-subrc IS INITIAL AND lines( lt_auart[] ) EQ 1.
+      gv_doc_type = lt_auart[ 1 ]-auart.
+    ENDIF.
+  ENDIF.
+
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->GROUP_DELIVERIES
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IS_KEYS                        TYPE        TS_KEYS
+* | [--->] IT_DG_MATRIX                   TYPE        TT_DG_MATRIX
+* | [<-()] RT_DELIVERY_GROUP              TYPE        TT_DELIVERY_GROUP
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD group_deliveries.
+* Begin ADD:RAVULV1:18-Mar-2020:ECR201902596
+
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002577
+  DATA : lt_delivery_group TYPE tt_delivery_group,
+         lt_profl          TYPE tt_profl,
+         lt_profl_temp     TYPE tt_profl.
+
+  CLEAR : rt_delivery_group.
+
+  DATA(lt_item_regulation) = is_keys-gt_item_regulation[].
+
+* Remove non-DG deliveries to first perform grouping on DG deliveries
+  DELETE lt_item_regulation WHERE cont_dg IS INITIAL.
+
+  CHECK lt_item_regulation[] IS NOT INITIAL.   " ++ADD:RAVULV1:05-Mar-2021:TPR-23582
+
+* Within the DG deliveries, sort based on DG profile
+  SORT lt_item_regulation BY vbeln profl DESCENDING.
+  DELETE ADJACENT DUPLICATES FROM lt_item_regulation COMPARING vbeln profl.
+
+  DATA(lv_first_delivery) = lt_item_regulation[ 1 ]-vbeln.
+
+* Though below logic has nested LOOPs, it is assumed that the number of records/iterations
+* will not be very high to cause a performance issue.
+  LOOP AT lt_item_regulation REFERENCE INTO DATA(lr_item_reg).
+
+    READ TABLE is_keys-gt_delivery_header REFERENCE INTO DATA(lr_delivery_data)
+         WITH TABLE KEY vbeln = lr_item_reg->vbeln.
+    IF sy-subrc NE 0.
+      CONTINUE.
+    ENDIF.
+
+    READ TABLE is_keys-gt_delivery_item REFERENCE INTO DATA(lr_item)
+         WITH KEY vbeln = lr_item_reg->vbeln
+                  posnr = lr_item_reg->posnr BINARY SEARCH.
+    IF sy-subrc NE 0.
+      CONTINUE.
+    ENDIF.
+
+    READ TABLE is_keys-gt_sales_order_info REFERENCE INTO DATA(lr_vbak)
+         WITH TABLE KEY vbeln = lr_item->vgbel.
+    IF sy-subrc EQ 0.
+      DATA(lv_zterm) = lr_vbak->zterm.
+    ENDIF.
+
+* Get the DG profile for the current time, if non-DG item, mark it as NDG
+    IF lr_item_reg->profl IS NOT INITIAL.
+      DATA(lv_profl) = lr_item_reg->profl.
+    ELSE.
+      lv_profl = gc_dg_group_non_dg.
+    ENDIF.
+
+* Check if the current DG profile is relevant for threshold checks
+    IF lv_profl IN gt_r_threshold_profl[] AND gt_r_threshold_profl[] IS NOT INITIAL.
+      DATA(lv_threshold_dg_grp) = lv_profl.
+    ENDIF.
+
+* For the first delivery, add it to the package as first delivery/package
+    IF lv_first_delivery = lr_item_reg->vbeln.
+      READ TABLE lt_delivery_group REFERENCE INTO DATA(lr_delivery_group)
+           WITH TABLE KEY kunwe = lr_delivery_data->kunnr
+                          vstel = lr_delivery_data->vstel
+                          inco1 = lr_delivery_data->inco1
+                          inco2 = lr_delivery_data->inco2
+                          zterm = lv_zterm.
+      IF sy-subrc NE 0.
+        INSERT VALUE #( kunwe = lr_delivery_data->kunnr
+                        vstel = lr_delivery_data->vstel
+                        inco1 = lr_delivery_data->inco1
+                        inco2 = lr_delivery_data->inco2
+                        zterm = lv_zterm
+                        dggrp = lv_threshold_dg_grp  " ++ADD:RAVULV1:11-Mar-2021:ECR202002577:TPR-23610
+                        dgrel = lr_delivery_data->zzdg_trans
+                        gt_profl = VALUE #( ( lv_profl ) )
+                        gt_vstel = VALUE #( ( lr_delivery_data->vstel ) )   " ++ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+                        deliveries = VALUE #( ( vbeln = lr_item_reg->vbeln
+                                                route = lr_delivery_data->route
+                                                contdg = lr_delivery_data->cont_dg
+                                                lwdg   = lr_delivery_data->zzdg_lwdg
+                                                dggrp  = lv_threshold_dg_grp
+                                                dgrel  = lr_delivery_data->zzdg_trans ) ) ) INTO TABLE lt_delivery_group.
+
+      ELSE.
+        INSERT lv_profl INTO TABLE lr_delivery_group->gt_profl.
+      ENDIF.
+      CLEAR lv_threshold_dg_grp.
+      CONTINUE.
+    ELSE.
+* For subsequent deliveries, keep capturing the DG profiles of the corresponding delivery
+      READ TABLE lt_profl TRANSPORTING NO FIELDS
+           WITH TABLE KEY table_line = lv_profl.
+      IF sy-subrc NE 0.
+        INSERT lv_profl INTO TABLE lt_profl.
+      ENDIF.
+    ENDIF.
+
+    AT END OF vbeln.
+* Once the complete delivery is looped through, check for existing packages
+* if the current delivery will be allowed in respective package
+      LOOP AT lt_delivery_group REFERENCE INTO lr_delivery_group.
+
+* Begin ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+        DATA(lv_shipping_point) = check_shipping_point( it_group_shipping_points = lr_delivery_group->gt_vstel[]
+                                                        iv_delvry_shipping_point = lr_delivery_data->vstel
+                                                        iv_group_shipping_point  = lr_delivery_group->vstel ).
+* End ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+        CLEAR lt_profl_temp.
+* If current delivery header criteria differs, ignore current package
+        IF lr_delivery_group->kunwe NE lr_delivery_data->kunnr
+        OR lr_delivery_group->vstel NE lv_shipping_point            " ++ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+        OR lr_delivery_group->inco1 NE lr_delivery_data->inco1
+        OR lr_delivery_group->inco2 NE lr_delivery_data->inco2
+        OR lr_delivery_group->zterm NE lv_zterm.
+          CONTINUE.
+        ENDIF.
+
+* For each DG profile on the delivery, check if it is allowed with all the
+* previously existing DG profiles in the current package
+        LOOP AT lt_profl REFERENCE INTO DATA(lr_delivery_profl).
+
+* If current DG profile is not in the previous list of DG profiles of the
+* current package, add it to temporary table (These can be used to add to
+* the respective package, if the delivery is added to that package for
+* subsequent iterations)
+          READ TABLE lr_delivery_group->gt_profl TRANSPORTING NO FIELDS
+               WITH TABLE KEY table_line = lr_delivery_profl->*.
+          IF sy-subrc NE 0.
+            INSERT lr_delivery_profl->* INTO TABLE lt_profl_temp.
+          ENDIF.
+
+* Below loop runs on DG profiles already in the package and checks each DG
+* profile against the delivery DG profile
+          LOOP AT lr_delivery_group->gt_profl REFERENCE INTO DATA(lr_profl).
+
+* If current profile is same as already added on package, it is allowed
+            IF lr_delivery_profl->* EQ lr_profl->*.
+              DATA(lv_dg_grp) = lr_profl->*.
+              CONTINUE.
+            ENDIF.
+
+* Check from ZORF_DG_MATRIX, if the 2 different DG profiles are allowed to be combined or not
+            DATA(ls_dg_mat_input) = VALUE ts_dg_mat_input( zgrp  = lr_delivery_profl->*
+                                                           lwdg  = lr_delivery_data->zzdg_lwdg
+                                                           werks = lr_item->werks
+                                                           kunnr = lr_delivery_data->kunnr
+                                                           route = lr_delivery_data->route
+                                                           flow  = lr_item_reg->flow
+                                                           zsgr  = lr_profl->* ).
+
+            lv_dg_grp = get_dg_group( EXPORTING it_dg_matrix    = it_dg_matrix
+                                                is_dg_mat_input = ls_dg_mat_input ).
+
+* If not allowed, no need to check further DG profiles and exit the loop
+            IF lv_dg_grp IS INITIAL.
+              EXIT.
+            ENDIF.
+          ENDLOOP.
+
+* If a mismatch DG profile is found in the current package, exit the loop of the delivery
+* DG profiles, and proceed to check for next package
+          IF lv_dg_grp IS INITIAL.
+            EXIT.
+          ENDIF.
+        ENDLOOP.
+
+* If all the delivery DG profiles are a perfect match with all the existing DG profiles in
+* the currently iterated package, the delivery can be added to current package and no need
+* to check for further packages - exit the loop
+        IF lv_dg_grp IS NOT INITIAL.
+          EXIT.
+        ENDIF.
+
+      ENDLOOP.
+
+* If no match found for current delivery in all the previous packages, it needs to be added
+* as a separate new package
+      IF lv_dg_grp IS INITIAL.
+        INSERT VALUE #( kunwe = lr_delivery_data->kunnr
+                        vstel = lv_shipping_point    " ++ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+                        inco1 = lr_delivery_data->inco1
+                        inco2 = lr_delivery_data->inco2
+                        zterm = lv_zterm
+                        dggrp = lv_threshold_dg_grp  " ++ADD:RAVULV1:11-Mar-2021:ECR202002577:TPR-23610
+                        dgrel = lr_delivery_data->zzdg_trans
+                        gt_profl = lt_profl
+                        gt_vstel = VALUE #( ( lr_delivery_data->vstel ) )  " ++ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+                        deliveries = VALUE #( ( vbeln = lr_item_reg->vbeln
+                                                route = lr_delivery_data->route
+                                                contdg = lr_delivery_data->cont_dg
+                                                lwdg   = lr_delivery_data->zzdg_lwdg
+                                                dggrp  = lv_threshold_dg_grp
+                                                dgrel  = lr_delivery_data->zzdg_trans ) ) ) INTO TABLE lt_delivery_group.
+      ELSE.
+* If delivery DG profiles match with the package DG profiles, add the delivery to corresponding package
+        INSERT VALUE #( vbeln = lr_item_reg->vbeln
+                        route = lr_delivery_data->route
+                        contdg = lr_delivery_data->cont_dg
+                        lwdg   = lr_delivery_data->zzdg_lwdg
+                        dggrp  = lv_threshold_dg_grp
+                        dgrel  = lr_delivery_data->zzdg_trans ) INTO TABLE lr_delivery_group->deliveries.
+
+* If delivery is already DG relevant, mark the package as DG relevant
+        IF lr_delivery_data->zzdg_trans IS NOT INITIAL.
+          lr_delivery_group->dgrel = lr_delivery_data->zzdg_trans.
+        ENDIF.
+
+        lr_delivery_group->dggrp = lv_threshold_dg_grp.  " ++ADD:RAVULV1:11-Mar-2021:ECR202002577:TPR-23610
+
+* If any delivery DG profiles exist, that were not part of the current package, add the delivery
+* DG profiles to the current package. On the next iteration these DG profiles will also be
+* considered for checks
+        INSERT LINES OF lt_profl_temp INTO TABLE lr_delivery_group->gt_profl.
+
+* Begin ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+        READ TABLE lr_delivery_group->gt_vstel TRANSPORTING NO FIELDS
+             WITH TABLE KEY table_line = lr_delivery_data->vstel.
+        IF sy-subrc NE 0.
+          INSERT lr_delivery_data->vstel INTO TABLE lr_delivery_group->gt_vstel[].
+        ENDIF.
+* End ADD:RAVULV1:26-Apr-2021:ECR202002578:TPR-23895
+      ENDIF.
+      CLEAR : lt_profl[], lv_dg_grp, lv_threshold_dg_grp, lt_profl_temp, lv_zterm.
+    ENDAT.
+
+  ENDLOOP.
+
+  INSERT LINES OF lt_delivery_group INTO TABLE rt_delivery_group.
+* End ADD:RAVULV1:16-Feb-2021:ECR202002577
+* End ADD:RAVULV1:18-Mar-2020:ECR201902596
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->ON_ALIGN_ROUTES_CLICKED
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_SELECTED_ROUTE              LIKE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD on_align_routes_clicked.
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+
+  DATA: ls_header_data    TYPE bapiobdlvhdrchg,
+        ls_header_control TYPE bapiobdlvhdrctrlchg,
+        lv_delivery       TYPE vbeln_vl,
+        lt_return         TYPE STANDARD TABLE OF bapiret2,
+        lt_displaytable   TYPE STANDARD TABLE OF tdline INITIAL SIZE 0.
+
+  CLEAR gt_displaytable.
+
+  gv_route_align_processed = abap_true.
+
+* Begin ADD:RAVULV1:14-Mar-2021:ECR202002578:TPR-23606
+  DATA(lt_data) = gt_data[].
+  SORT lt_data BY vbeln.
+* End ADD:RAVULV1:14-Mar-2021:ECR202002578:TPR-23606
+
+  LOOP AT gt_deliveries REFERENCE INTO DATA(lr_delivery).
+
+    CLEAR : ls_header_data, ls_header_control, lv_delivery, lt_return.
+
+    READ TABLE lt_data REFERENCE INTO DATA(lr_data)       " ++ADD:RAVULV1:14-Mar-2021:ECR202002578:TPR-23606
+         WITH KEY vbeln = lr_delivery->* BINARY SEARCH.
+    IF sy-subrc EQ 0 AND lr_data->route NE iv_selected_route.
+
+      ls_header_data-deliv_numb = lr_delivery->*.
+      ls_header_data-route = iv_selected_route.
+
+      ls_header_control-deliv_numb = lr_delivery->*.
+      ls_header_control-route_flg = abap_true.
+
+      lv_delivery = lr_delivery->*.
+
+      CALL FUNCTION 'SD_DELIVERY_CUMULATIVE_REFRESH'.
+
+      CALL FUNCTION 'RV_DELIVERY_INIT'.
+
+      CALL FUNCTION 'MESSAGES_INITIALIZE'.
+
+      CALL FUNCTION 'BAPI_OUTB_DELIVERY_CHANGE'
+        EXPORTING
+          header_data    = ls_header_data
+          header_control = ls_header_control
+          delivery       = lv_delivery
+        TABLES
+          return         = lt_return.
+
+* Binary search not needed, as table will not have many entries
+      READ TABLE lt_return REFERENCE INTO DATA(lr_return)
+           WITH KEY type = 'E'.
+      IF sy-subrc NE 0.
+        READ TABLE lt_return REFERENCE INTO lr_return
+             WITH KEY type = 'A'.
+      ENDIF.
+
+      IF sy-subrc NE 0.
+        CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'
+          EXPORTING
+            wait = 'X'.
+
+        APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO DATA(lr_display).
+        lr_display->* = space.
+
+        APPEND INITIAL LINE TO lt_displaytable REFERENCE INTO lr_display.
+        lr_display->* = lv_delivery && ':' && | | && 'Route Updated successfully'(m12).
+      ELSE.
+        CALL FUNCTION 'BAPI_TRANSACTION_ROLLBACK'.
+
+        IF gt_displaytable[] IS INITIAL.
+          APPEND INITIAL LINE TO gt_displaytable REFERENCE INTO lr_display.
+          lr_display->* = 'Routes could not be updated on below deliveries'(m13).
+        ENDIF.
+
+        APPEND INITIAL LINE TO gt_displaytable REFERENCE INTO lr_display.
+        lr_display->* = space.
+
+        APPEND INITIAL LINE TO gt_displaytable REFERENCE INTO lr_display.
+        lr_display->* = lv_delivery && ':'.
+
+        APPEND INITIAL LINE TO gt_displaytable REFERENCE INTO lr_display.
+        lr_display->* = lr_return->message.
+
+      ENDIF.
+    ENDIF.
+  ENDLOOP.
+
+  IF gt_displaytable[] IS NOT INITIAL AND lt_displaytable[] IS NOT INITIAL.
+    APPEND INITIAL LINE TO gt_displaytable REFERENCE INTO lr_display.
+    lr_display->* = space.
+
+    APPEND INITIAL LINE TO gt_displaytable REFERENCE INTO lr_display.
+    lr_display->* = 'Success Log:'(m14).
+
+    APPEND LINES OF lt_displaytable TO gt_displaytable.
+  ENDIF.
+
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->ON_CREATE_SHIPMENT_CLICKED
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD on_create_shipment_clicked.
+
+  DATA: l_error           TYPE boolean_flg VALUE abap_false,
+        lr_prev_data_line TYPE REF TO zts_mot_cvc_report,
+        lt_lines          TYPE salv_t_row,
+        lt_y2_flows_input TYPE tt_y2_flows,      "++ADD:RAVULV1:16-Feb-2021:ECR202002579
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+        lt_ebeln          TYPE tt_ebeln,
+        lt_vbeln          TYPE tt_vbeln.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+
+*Begin ADD:HEUTMJ2:26-Nov-2018:ECR201803331
+  DATA:
+    lt_deliveries TYPE tt_deliveries.
+*End   ADD:HEUTMJ2:26-Nov-2018:ECR201803331
+
+  CHECK me->g_calc_type EQ zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_type~delivery.
+
+  CLEAR : gt_routes[], gt_deliveries[], gv_route_align_processed. " ++ADD:RAVULV1:16-Feb-2021:ECR202002578
+
+  lt_lines = me->go_view->get_selected_alv_lines( ).
+
+  IF lt_lines IS INITIAL.
+    MESSAGE i008 DISPLAY LIKE 'W'.
+  ELSE.
+    LOOP AT lt_lines REFERENCE INTO DATA(lr_line).
+      READ TABLE me->gt_data REFERENCE INTO DATA(lr_data) INDEX lr_line->*.
+      IF syst-subrc EQ 0.
+        IF lr_data->tknum IS NOT INITIAL.
+
+          l_error = abap_true.
+
+          MESSAGE i009 DISPLAY LIKE 'W'.
+          EXIT.
+        ENDIF.
+
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+        IF lr_data->vgbel IS NOT INITIAL.
+          IF lr_data->vgtyp IN gt_sto_doc_category[] AND gt_sto_doc_category[] IS NOT INITIAL.
+            READ TABLE lt_ebeln TRANSPORTING NO FIELDS
+                 WITH TABLE KEY table_line = lr_data->vgbel.
+            IF sy-subrc IS NOT INITIAL.
+              INSERT lr_data->vgbel INTO TABLE lt_ebeln.
+            ENDIF.
+          ELSE.
+            READ TABLE lt_vbeln TRANSPORTING NO FIELDS
+                 WITH TABLE KEY table_line = lr_data->vgbel.
+            IF sy-subrc IS NOT INITIAL.
+              INSERT lr_data->vgbel INTO TABLE lt_vbeln.
+            ENDIF.
+          ENDIF.
+        ENDIF.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+      ENDIF.
+
+*Begin ADD:HEUTMJ2:26-Nov-2018:ECR201803331
+*-----Collect deliveries:
+      READ TABLE lt_deliveries TRANSPORTING NO FIELDS
+          WITH TABLE KEY table_line = lr_data->vbeln.
+      IF syst-subrc NE 0.
+        INSERT lr_data->vbeln INTO TABLE lt_deliveries.
+      ENDIF.
+*End   ADD:HEUTMJ2:26-Nov-2018:ECR201803331
+
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+      READ TABLE gt_routes TRANSPORTING NO FIELDS
+           WITH TABLE KEY table_line = lr_data->route.
+      IF sy-subrc NE 0.
+        INSERT lr_data->route INTO TABLE gt_routes.
+      ENDIF.
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+      READ TABLE lt_y2_flows_input TRANSPORTING NO FIELDS
+           WITH TABLE KEY route = lr_data->route
+                          plant = lr_data->werks
+                          kunnr = lr_data->kunwe.
+      IF sy-subrc NE 0.
+        INSERT VALUE #( route = lr_data->route
+                        plant = lr_data->werks
+                        kunnr = lr_data->kunwe ) INTO TABLE lt_y2_flows_input.
+      ENDIF.
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+    ENDLOOP.
+
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+    get_order_type( it_ebeln = lt_ebeln[]
+                    it_vbeln = lt_vbeln[] ).
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+
+*Begin ADD:HEUTMJ2:26-Nov-2018:ECR201803331
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+    IF execute_checks( it_deliveries = lt_deliveries
+                       it_y2_flows_input = lt_y2_flows_input ).
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+      RETURN.
+    ENDIF.
+*End   ADD:HEUTMJ2:26-Nov-2018:ECR201803331
+
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+* If the selected deliveries have different routes, we need to display
+* a route alignment screen for user to choose routes to align
+    IF lines( gt_routes[] ) GT 1.
+      l_error = abap_true.
+
+* Capture the selected deliveries
+      gt_deliveries[] = lt_deliveries[].
+
+* Display the route alignment screen for the user and once user chooses
+* a route, the deliveries are updated
+      me->go_view->display_route_alignment_screen( gt_routes ).
+
+      l_error = display_route_alignment_log( ).
+    ENDIF.
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+
+    IF l_error EQ abap_false.
+      me->go_view->display_shipment_create_screen( ).
+    ENDIF.
+
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002578
+* Trigger refresh only if route alignment process is executed
+    IF gv_route_align_processed IS NOT INITIAL.
+      TRY.                                                     " ++ADD:RAVULV1:26-Oct-2021:ECR251958033
+          me->refresh_overview( ).
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+        CATCH zcx_mot_cvc_report INTO DATA(lo_exception).
+          MESSAGE lo_exception TYPE if_xo_const_message=>info DISPLAY LIKE if_xo_const_message=>warning.
+      ENDTRY.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+    ENDIF.
+* End ADD:RAVULV1:16-Feb-2021:ECR202002578
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->ON_EXEC_CALCULATION_CLICKED
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_SHPMH                       LIKE
+* | [--->] IV_SHPMH_NUM                   LIKE
+* | [--->] IV_CALC_BASE                   LIKE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD on_exec_calculation_clicked.
+
+  DATA: lw_doc_item  TYPE zcl_mot_cvc_calculator=>ts_doc_item,
+        lt_lines     TYPE salv_t_row,
+        lt_doc_items TYPE zcl_mot_cvc_calculator=>tt_doc_item,
+        lo_exception TYPE REF TO zcx_mot_cvc_report.
+
+
+  lt_lines  = me->go_view->get_selected_alv_lines( ).
+
+  LOOP AT lt_lines REFERENCE INTO DATA(lr_line).
+    READ TABLE me->gt_data REFERENCE INTO DATA(lr_data) INDEX lr_line->*.
+    IF syst-subrc EQ 0.
+      CASE me->g_calc_type.
+        WHEN zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_type~delivery OR
+             zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_type~order.
+
+          lw_doc_item-docnr  = lr_data->vbeln.
+          lw_doc_item-posnr  = lr_data->posnr.
+        WHEN zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_type~sto.
+
+          lw_doc_item-docnr  = lr_data->ebeln.
+          lw_doc_item-posnr  = CONV #( lr_data->ebelp ).
+      ENDCASE.
+
+      lw_doc_item-etenr     = lr_data->etenr.
+
+      CASE iv_calc_base.
+        WHEN zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_base~confirmed.
+          lw_doc_item-volum  = lr_data->cnf_volum.
+          lw_doc_item-palful = lr_data->palful_cnf.
+          lw_doc_item-palmix = lr_data->palmix_cnf.
+        WHEN zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_base~ordered.
+          lw_doc_item-volum  = lr_data->volum.
+          lw_doc_item-palful = lr_data->palful.
+          lw_doc_item-palmix = lr_data->palmix.
+      ENDCASE.
+
+      lw_doc_item-voleh  = lr_data->voleh.
+
+*Begin ADD:HINSBJ1:24-Oct-2019:ECR201902195
+      TRY.
+*Begin ADD:HINSBJ1:22-Jan-2020:DEF20927
+          CASE iv_calc_base.
+            WHEN zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_base~confirmed.
+              lw_doc_item-ntgew = convert_weight( iv_weight = lr_data->cnf_ntgew
+                                                  iv_uom    = lr_data->gewei ).
+
+            WHEN zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_base~ordered.
+*End ADD:HINSBJ1:22-Jan-2020:DEF20927
+              lw_doc_item-ntgew = convert_weight( iv_weight = lr_data->ntgew
+                                                  iv_uom    = lr_data->gewei ).
+          ENDCASE.    "++ADD:HINSBJ1:22-Jan-2020:DEF20927
+
+        CATCH zcx_mot_cvc_report.
+*Begin ADD:HINSBJ1:22-Jan-2020:DEF20927
+          CASE iv_calc_base.
+            WHEN zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_base~confirmed.
+              lw_doc_item-ntgew = lr_data->cnf_ntgew.
+            WHEN zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_base~ordered.
+*End ADD:HINSBJ1:22-Jan-2020:DEF20927
+              lw_doc_item-ntgew = lr_data->ntgew.
+          ENDCASE.    "++ADD:HINSBJ1:22-Jan-2020:DEF20927
+      ENDTRY.
+*End ADD:HINSBJ1:24-Oct-2019:ECR201902195
+
+      INSERT lw_doc_item INTO TABLE lt_doc_items.
+    ENDIF.
+  ENDLOOP.
+
+  TRY.
+      me->go_view->set_calculation_results( is_result = zcl_mot_cvc_calculator=>calculate_volume(
+                                                                                     EXPORTING
+                                                                                       iv_nr_means_of_shipping   = iv_shpmh_num
+                                                                                       iv_nr_of_pallet_locations = me->go_model->get_fixed_number_of_pallet_loc( iv_shpmh )
+                                                                                       is_pallet_attributes      = me->go_model->get_pallet_attributes( )
+                                                                                     CHANGING
+                                                                                       it_doc_items              = lt_doc_items
+                                                                                          ) ).
+    CATCH zcx_mot_cvc_report INTO lo_exception.
+      MESSAGE lo_exception TYPE 'I' DISPLAY LIKE 'W'.
+  ENDTRY.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->ON_EXEC_CREATE_SHIP_CLICKED
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_TRANS_PLANNING_POINT        LIKE
+* | [--->] IV_SHIPMENT_TYPE               LIKE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD on_exec_create_ship_clicked.
+
+  DATA: l_shipment_number TYPE tknum,
+        lo_exception      TYPE REF TO zcx_mot_cvc_report,
+        lt_lines          TYPE salv_t_row,
+        lt_deliveries     TYPE zcl_mot_cvc_report_cntrl=>tt_deliveries.
+
+
+  CHECK me->g_calc_type EQ zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_type~delivery.
+
+  lt_lines = me->go_view->get_selected_alv_lines( ).
+
+  LOOP AT lt_lines REFERENCE INTO DATA(lr_line).
+    READ TABLE me->gt_data REFERENCE INTO DATA(lr_data) INDEX lr_line->*.
+    IF syst-subrc EQ 0.
+      INSERT lr_data->vbeln INTO TABLE lt_deliveries. " Unique entries only
+    ENDIF.
+  ENDLOOP.
+
+  CHECK lt_deliveries IS NOT INITIAL.
+
+  TRY.
+      l_shipment_number = me->create_shipment(
+                                 iv_trans_planning_point = iv_trans_planning_point
+                                 iv_shipment_type        = iv_shipment_type
+                                 it_deliveries           = lt_deliveries
+                                    ).
+
+      MESSAGE i012 DISPLAY LIKE 'S' WITH l_shipment_number.
+
+      me->refresh_overview( ).
+
+    CATCH zcx_mot_cvc_report INTO lo_exception.
+      MESSAGE lo_exception TYPE 'I' DISPLAY LIKE 'W'.
+  ENDTRY.
+
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->ON_HOTSPOT_PURCH_DOC_CLICKED
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_PURCHASING_DOCUMENT         LIKE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD on_hotspot_purch_doc_clicked.
+
+
+  CHECK iv_purchasing_document IS NOT INITIAL.
+
+  SET PARAMETER ID: 'BES' FIELD iv_purchasing_document,
+                    'BSA' FIELD 'UB'.
+
+*  CALL TRANSACTION 'ME23N'. "--DEL:CHATTS4:02-Nov-2020:PRB0043795
+* Begin ADD:CHATTS4:02-Nov-2020:PRB0043795
+  TRY.
+      CALL TRANSACTION 'ME23N' WITH AUTHORITY-CHECK AND SKIP FIRST SCREEN.
+    CATCH cx_sy_authorization_error.
+      MESSAGE i063 WITH 'ME23N' DISPLAY LIKE gc_msg_type_e.
+  ENDTRY.
+* End ADD:CHATTS4:02-Nov-2020:PRB0043795
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->ON_HOTSPOT_SD_DOC_CLICKED
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_SD_DOCUMENT                 LIKE
+* | [--->] IV_CATEGORY                    LIKE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD on_hotspot_sd_doc_clicked.
+
+
+  CHECK iv_sd_document IS NOT INITIAL.
+
+  IF me->g_calc_type EQ zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_type~delivery.
+    CASE iv_category.
+      WHEN zcl_mot_cvc_report_cntrl=>gc_sd_doc_category-inbound_delivery.
+        SET PARAMETER ID 'VLM' FIELD iv_sd_document.
+
+*        CALL TRANSACTION 'VL33N' AND SKIP FIRST SCREEN. "--DEL:CHATTS4:02-Nov-2020:PRB0043795
+*       Begin ADD:CHATTS4:02-Nov-2020:PRB0043795
+        TRY.
+            CALL TRANSACTION 'VL33N' WITH AUTHORITY-CHECK AND SKIP FIRST SCREEN.
+          CATCH cx_sy_authorization_error.
+            MESSAGE i063 WITH 'VL33N' DISPLAY LIKE gc_msg_type_e.
+        ENDTRY.
+*       End ADD:CHATTS4:02-Nov-2020:PRB0043795
+      WHEN zcl_mot_cvc_report_cntrl=>gc_sd_doc_category-outbound_delivery.
+        SET PARAMETER ID 'VL' FIELD iv_sd_document.
+
+        CALL TRANSACTION 'VL03N' AND SKIP FIRST SCREEN. "--DEL:CHATTS4:02-Nov-2020:PRB0043795
+*       Begin ADD:CHATTS4:02-Nov-2020:PRB0043795
+        TRY.
+            CALL TRANSACTION 'VL03N' WITH AUTHORITY-CHECK AND SKIP FIRST SCREEN.
+          CATCH cx_sy_authorization_error.
+            MESSAGE i063 WITH 'VL03N' DISPLAY LIKE gc_msg_type_e.
+        ENDTRY.
+*       End ADD:CHATTS4:02-Nov-2020:PRB0043795
+    ENDCASE.
+  ELSE.
+    SET PARAMETER ID 'AUN' FIELD iv_sd_document.
+
+*    CALL TRANSACTION 'VA03' AND SKIP FIRST SCREEN. "--DEL:CHATTS4:02-Nov-2020:PRB0043795
+*   Begin ADD:CHATTS4:02-Nov-2020:PRB0043795
+    TRY.
+        CALL TRANSACTION 'VA03' WITH AUTHORITY-CHECK AND SKIP FIRST SCREEN.
+      CATCH cx_sy_authorization_error.
+        MESSAGE i063 WITH 'VA03' DISPLAY LIKE gc_msg_type_e.
+    ENDTRY.
+*   End ADD:CHATTS4:02-Nov-2020:PRB0043795
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->ON_HOTSPOT_SHIPMENT_CLICKED
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_SHIPMENT                    LIKE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD on_hotspot_shipment_clicked.
+
+
+  CHECK iv_shipment IS NOT INITIAL.
+
+  SET PARAMETER ID 'TNR' FIELD iv_shipment.
+
+*  CALL TRANSACTION 'VT02N' AND SKIP FIRST SCREEN. "++ADD:HINSBJ1:24-Oct-2019:ECR201902195 "--DEL:CHATTS4:02-Nov-2020:PRB0043795
+* Begin ADD:CHATTS4:02-Nov-2020:PRB0043795
+  TRY.
+      CALL TRANSACTION 'VT02N' WITH AUTHORITY-CHECK AND SKIP FIRST SCREEN.
+    CATCH cx_sy_authorization_error.
+      MESSAGE i063 WITH 'VT02N' DISPLAY LIKE gc_msg_type_e.
+  ENDTRY.
+* End ADD:CHATTS4:02-Nov-2020:PRB0043795
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->ON_SHIPMENT_SIMULATE_CLICKED
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD on_shipment_simulate_clicked.
+
+  DATA: l_error           TYPE boolean_flg VALUE abap_false,
+        lr_prev_data_line TYPE REF TO zts_mot_cvc_report,
+        lt_lines          TYPE salv_t_row,
+        lt_y2_flows_input TYPE tt_y2_flows,  " ++ADD:RAVULV1:16-Feb-2021:ECR202002579
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+        lt_ebeln          TYPE tt_ebeln,
+        lt_vbeln          TYPE tt_vbeln.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+
+  DATA:
+    lt_deliveries TYPE tt_deliveries.
+
+  CHECK me->g_calc_type EQ zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_type~delivery.
+
+  lt_lines = me->go_view->get_selected_alv_lines( ).
+
+  IF lt_lines IS INITIAL.
+    MESSAGE i008 DISPLAY LIKE 'W'.
+  ELSE.
+    LOOP AT lt_lines REFERENCE INTO DATA(lr_line).
+      READ TABLE me->gt_data REFERENCE INTO DATA(lr_data) INDEX lr_line->*.
+      IF syst-subrc EQ 0.
+        IF lr_data->tknum IS NOT INITIAL.
+          DATA(lv_assigned_shipment) = abap_true.
+          CONTINUE.
+        ENDIF.
+
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+        READ TABLE lt_y2_flows_input TRANSPORTING NO FIELDS
+             WITH TABLE KEY route = lr_data->route
+                            plant = lr_data->werks
+                            kunnr = lr_data->kunwe.
+        IF sy-subrc NE 0.
+          INSERT VALUE #( route = lr_data->route
+                          plant = lr_data->werks
+                          kunnr = lr_data->kunwe ) INTO TABLE lt_y2_flows_input.
+        ENDIF.
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+        IF lr_data->vgbel IS NOT INITIAL.
+          IF lr_data->vgtyp IN gt_sto_doc_category[] AND gt_sto_doc_category[] IS NOT INITIAL.
+            READ TABLE lt_ebeln TRANSPORTING NO FIELDS
+                 WITH TABLE KEY table_line = lr_data->vgbel.
+            IF sy-subrc IS NOT INITIAL.
+              INSERT lr_data->vgbel INTO TABLE lt_ebeln.
+            ENDIF.
+          ELSE.
+            READ TABLE lt_vbeln TRANSPORTING NO FIELDS
+                 WITH TABLE KEY table_line = lr_data->vgbel.
+            IF sy-subrc IS NOT INITIAL.
+              INSERT lr_data->vgbel INTO TABLE lt_vbeln.
+            ENDIF.
+          ENDIF.
+        ENDIF.
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+      ENDIF.
+
+*-----Collect deliveries:
+      READ TABLE lt_deliveries TRANSPORTING NO FIELDS
+          WITH TABLE KEY table_line = lr_data->vbeln.
+      IF syst-subrc NE 0.
+        INSERT lr_data->vbeln INTO TABLE lt_deliveries.
+      ENDIF.
+    ENDLOOP.
+  ENDIF.
+
+  IF lv_assigned_shipment IS NOT INITIAL.
+    IF lt_deliveries[] IS INITIAL.
+      MESSAGE i060.
+      RETURN.
+    ELSE.
+      MESSAGE i061 DISPLAY LIKE 'W'.
+    ENDIF.
+  ENDIF.
+
+* Begin ADD:RAVULV1:26-Oct-2021:ECR251958033
+  get_order_type( it_ebeln = lt_ebeln[]
+                  it_vbeln = lt_vbeln[] ).
+* End ADD:RAVULV1:26-Oct-2021:ECR251958033
+
+* Begin ADD:RAVULV1:16-Feb-2021:ECR202002579
+  determine_packages( it_deliveries = lt_deliveries
+                      it_y2_flows_input = lt_y2_flows_input ).
+* End ADD:RAVULV1:16-Feb-2021:ECR202002579
+
+  CLEAR : lv_assigned_shipment.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->ON_START_OF_SELECTION
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IS_CRITERIA                    LIKE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD on_start_of_selection.
+
+
+  DATA: lw_type      TYPE zts_mot_cvc_sel_type,
+
+        lo_model_va  TYPE REF TO zcl_mot_cvc_report_mdl_va,
+        lo_model_vl  TYPE REF TO zcl_mot_cvc_report_mdl_vl,
+        lo_exception TYPE REF TO zcx_mot_cvc_report.
+
+
+  MOVE-CORRESPONDING is_criteria TO lw_type.
+
+  CASE lw_type-calc_type.
+    WHEN zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_type~order.
+      me->go_model ?= zcl_mot_cvc_report_mdl_va=>factory( ).
+    WHEN zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_type~delivery.
+      me->go_model ?= zcl_mot_cvc_report_mdl_vl=>factory( ).
+    WHEN zcl_mot_cvc_report_cntrl=>zif_mot_cvc_calc_type~sto.
+      me->go_model ?= zcl_mot_cvc_report_mdl_st=>factory( ).
+  ENDCASE.
+
+  IF me->go_model IS BOUND.
+    TRY.
+        me->g_calc_type = lw_type-calc_type.
+
+        me->gt_data = me->go_model->get_data( is_selection_criteria = is_criteria ).
+
+        me->set_last_selection( is_criteria = is_criteria ).
+
+        me->go_view->display_overview( iv_calc_type = me->g_calc_type ).
+
+      CATCH zcx_mot_cvc_report INTO lo_exception.
+        MESSAGE lo_exception TYPE 'I' DISPLAY LIKE 'W'.
+
+        me->go_view->return_to_selection_screen( ).
+    ENDTRY.
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->ON_VOLUME_CALCULATION_CLICKED
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD on_volume_calculation_clicked.
+
+
+  IF me->go_view->get_selected_alv_lines( ) IS INITIAL.
+    MESSAGE i005 DISPLAY LIKE 'W'.
+  ELSE.
+    me->go_view->display_calculation_screen( ).
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->REFRESH_OVERVIEW
+* +-------------------------------------------------------------------------------------------------+
+* | [!CX!] ZCX_MOT_CVC_REPORT
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD refresh_overview.
+
+
+  FIELD-SYMBOLS <ls_criteria> TYPE any.
+
+  ASSIGN me->gr_last_selection->* TO <ls_criteria>.
+
+  me->gt_data = me->go_model->get_data( is_selection_criteria = <ls_criteria> ).
+
+  me->go_view->display_overview( iv_calc_type = me->g_calc_type ).
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_MOT_CVC_REPORT_CNTRL->RUN
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD run.
+
+
+  me->go_view->display_selection_screen( ).
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Private Method ZCL_MOT_CVC_REPORT_CNTRL->SET_LAST_SELECTION
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IS_CRITERIA                    TYPE        ANY
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD set_last_selection.
+
+  FIELD-SYMBOLS <ls_criteria> TYPE any.
+
+  DATA(lo_typedescr) = cl_abap_typedescr=>describe_by_data( is_criteria ).
+
+  IF lo_typedescr IS BOUND.
+
+    CHECK lo_typedescr->is_ddic_type( ).
+
+    DATA(lw_ddic_header) = lo_typedescr->get_ddic_header( ).
+
+    CREATE DATA me->gr_last_selection TYPE (lw_ddic_header-tabname).
+
+    ASSIGN me->gr_last_selection->* TO <ls_criteria>.
+
+    <ls_criteria> = is_criteria.
+  ENDIF.
+
+ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Private Method ZCL_MOT_CVC_REPORT_CNTRL=>_REVISION_LOG
+* +-------------------------------------------------------------------------------------------------+
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+METHOD _revision_log.
+*&---------------------------------------------------------------------*
+*& Object Id    : ECR107519                                            *
+*& Author       : Jeroen de Zwaan (ZWAANJ1)                            *
+*& Creation Date: 12-Nov-2015                                          *
+*& Description  : Means of Shipping - consolidation and volume         *
+*&                calculation report.                                  *
+*& Transport    : DR1K9B37F9                                           *
+*&---------------------------------------------------------------------*
+*& Object Id     : EDD1636 / ECR107519                                 *
+*& Author        : Jeroen de Zwaan (ZWAANJ1)                           *
+*& Creation Date : 15-Jun-2016                                         *
+*& Description   : STO Amendment                                       *
+*& Transport No. : DR1K9B3P32                                          *
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / ECR201803331                              *
+*& Author        : John Heutmekers (Newitera)                          *
+*& Creation Date : 26-Nov-2018                                         *
+*& Description   : Add method DANGEROUS_GOODS_CHECK                    *
+*& Transport No. : DR1K9B5C1I                                          *
+*& Change Tag    : Begin ADD:HEUTMJ2:26-Nov-2018:ECR201803331          *
+*&                 End   ADD:HEUTMJ2:26-Nov-2018:ECR201803331          *
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / ECR201902195                              *
+*& Author        : Jos van Hinsberg                                    *
+*& Creation Date : 24-Oct-2019                                         *
+*& Description   : Simplification of the Volume calculation            *
+*& Transport No. : DR1K9B606J & DR1K9B60O2                             *
+*& Change Tag    : Begin ADD:HINSBJ1:24-Oct-2019:ECR201902195          *
+*&                 End ADD:HINSBJ1:24-Oct-2019:ECR201902195            *
+*&                 ++ADD:HINSBJ1:24-Oct-2019:ECR201902195              *
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / ECR201902195 (Defect 20927)               *
+*& Author        : Jos van Hinsberg                                    *
+*& Creation Date : 22-Jan-2020                                         *
+*& Description   : Use correct weight for volume calculation           *
+*& Transport No. : DR1K9B64HL                                          *
+*& Change Tag    : Begin ADD:HINSBJ1:22-Jan-2020:DEF20927              *
+*&                 End ADD:HINSBJ1:22-Jan-2020:DEF20927                *
+*&                 ++ADD:HINSBJ1:22-Jan-2020:DEF20927                  *
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / ECR201902596                              *
+*& Author        : Vani Prasad Ravulapati                              *
+*& Creation Date : 18-Mar-2020                                         *
+*& Description   : Shipment Simulation button and associated           *
+*&                 functionality. Also updated Dangerous goods check   *
+*&                 logic to the new DGMS tables in Create shipment code*
+*& Transport No. : DR1K9B67ZN                                          *
+*& Change Tag    : Begin ADD:RAVULV1:18-Mar-2020:ECR201902596          *
+*&                 End ADD:RAVULV1:18-Mar-2020:ECR201902596            *
+*&                 ++ADD:RAVULV1:18-Mar-2020:ECR201902596              *
+*&                 --ADD:RAVULV1:18-Mar-2020:ECR201902596              *
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / PRB0043795                                *
+*& Author        : Sayan Chatterjee                                    *
+*& Creation Date : 02-Nov-2020                                         *
+*& Description   : CVA call transaction is added with Auth check       *
+*& Transport No. : DR1K9B6GXB                                          *
+*& Change Tag    : Begin ADD:CHATTS4:02-Nov-2020:PRB0043795            *
+*&                 End ADD:CHATTS4:02-Nov-2020:PRB0043795              *
+*&                 --DEL:CHATTS4:02-Nov-2020:PRB0043795                *
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / ECR202002578                              *
+*& Author        : Vani Prasad Ravulapati                              *
+*& Creation Date : 16-Feb-2021                                         *
+*& Description   : DGMS R3 changes - Triangle matrix changes(202002577)*
+*&                 and Y2 nesting changes (202002579), along with route*
+*&                 alignment changes (202002578)                       *
+*& Transport No. : DR1K9B6LZ1                                          *
+*& Change Tag    : Begin ADD:RAVULV1:16-Feb-2021:ECR202002578          *
+*&                 End ADD:RAVULV1:16-Feb-2021:ECR202002578            *
+*&                 ++ADD:RAVULV1:16-Feb-2021:ECR202002578              *
+*&                 Begin ADD:RAVULV1:16-Feb-2021:ECR202002577          *
+*&                 End ADD:RAVULV1:16-Feb-2021:ECR202002577            *
+*&                 ++ADD:RAVULV1:16-Feb-2021:ECR202002577              *
+*&                 Begin ADD:RAVULV1:16-Feb-2021:ECR202002579          *
+*&                 End ADD:RAVULV1:16-Feb-2021:ECR202002579            *
+*&                 ++ADD:RAVULV1:16-Feb-2021:ECR202002579              *
+*& Defect fixes  : 23582 - Fix dump issue when selecting non-DG only   *
+*&                 for shipment simulation. Incorrect "flow" value     *
+*&                 considered during determination of packages for NDG *
+*&                 deliveries                                          *
+*&                 23606 - Shipment simulation proposes one package but*
+*&                 shipment creation errors for exceeding threshold    *
+*&                 checks. Issue fixed when running DG grouping checks *
+*&                 23610 - Logic adjusted to make sure NDG can go with *
+*&                 below threshold package (Z05, Z10). A fix for the   *
+*&                 logic implemented in Release 2                      *
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / INC7123747                                *
+*& Author        : Vani Prasad Ravulapati                              *
+*& Creation Date : 25-May-2021                                         *
+*& Description   : Fix issue with shipment simulate in non-DG flow when*
+*&                 checking for allowed shipping point combinations.   *
+*&                 Resolve inconsistency with shipment simulate and    *
+*&                 create, and also change the group display during DG *
+*&                 checks on shipment create                           *
+*& Transport No. : DR1K9B6PFF, DR1K9B6PX7, DR1K9B6Q0D                  *
+*& Change Tag    : Begin ADD:RAVULV1:25-May-2021:INC7123747            *
+*&                 End ADD:RAVULV1:25-May-2021:INC7123747              *
+*&                 ++ADD:RAVULV1:25-May-2021:INC7123747                *
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / ECR251958033                              *
+*& Author        : Vani Prasad Ravulapati                              *
+*& Creation Date : 26-Oct-2021                                         *
+*& Description   : Changes for shipment simulate and DG checks on      *
+*&                 create shipment for order type addition on the table*
+*&                 ZORF_DG_MATRIX                                      *
+*& Transport No. : DR1K9B6VAA                                          *
+*& Change Tag    : Begin ADD:RAVULV1:26-Oct-2021:ECR251958033          *
+*&                 End ADD:RAVULV1:26-Oct-2021:ECR251958033            *
+*&                 ++ADD:RAVULV1:26-Oct-2021:ECR251958033              *
+*&                 Begin DEL:RAVULV1:26-Oct-2021:ECR251958033          *
+*&                 End DEL:RAVULV1:26-Oct-2021:ECR251958033            *
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / INC8076898                                *
+*& Author        : Vani Prasad Ravulapati                              *
+*& Creation Date : 04-Mar-2022                                         *
+*& Description   : Fix issue with shipment simulate proposing incorrect*
+*&                 packages                                            *
+*& Transport No. : DR1K9B6ZP2                                          *
+*& Change Tag    : Begin ADD:RAVULV1:04-Mar-2022:INC8076898            *
+*&                 End ADD:RAVULV1:04-Mar-2022:INC8076898              *
+*&                 ++ADD:RAVULV1:04-Mar-2022:INC8076898                *
+*&---------------------------------------------------------------------*
+*& Object Id     : RDD1636 / INC10617507                               *
+*& Author        : Vani Prasad Ravulapati                              *
+*& Creation Date : 01-Feb-2024                                         *
+*& Description   : Fix issue with discrepancy between shipment simulate*
+*&                 and shipment creation                               *
+*& Transport No. : DR1K9B7MQ4                                          *
+*& Change Tag    : Begin ADD:RAVULV1:01-Feb-2024:INC10617507           *
+*&                 End ADD:RAVULV1:01-Feb-2024:INC10617507             *
+*&---------------------------------------------------------------------*
+
+
+ENDMETHOD.
+ENDCLASS.
